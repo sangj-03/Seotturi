@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>서투리 판정 로직</title>
+<style>
+  @page {
+    size: A4;
+    margin: 18mm 17mm 18mm 17mm;
+    @bottom-center { content: counter(page) " / " counter(pages); font-family: "Noto Sans CJK KR"; font-size: 8pt; color: #888; }
+    @top-right { content: "서투리 판정 로직 · Gemma4 + Whisper"; font-family: "Noto Sans CJK KR"; font-size: 7.5pt; color: #aaa; }
+  }
+  @page :first { @top-right { content: none; } }
+  :root {
+    --ink: #1d1d1f; --sub: #55575c; --line: #dcdde0; --soft: #f5f6f7;
+    --g: #3b6fd8; --g-bg: #eaf1fd;      /* Gemma */
+    --w: #23866a; --w-bg: #e4f4ee;      /* Whisper */
+    --m: #77787c; --m-bg: #f1f1ef;      /* measured */
+    --s: #b7791f; --s-bg: #fdf3e1;      /* scores */
+    --warn: #b4442f; --warn-bg: #fbeeea;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { font-family: "Noto Sans CJK KR", sans-serif; color: var(--ink); font-size: 9.6pt; line-height: 1.62; margin: 0; background: #fff; word-break: keep-all; }
+  code, .mono { font-family: "Noto Sans Mono CJK KR", monospace; font-size: 8.4pt; }
+  code { background: var(--soft); padding: 0 3px; border-radius: 3px; }
+  h1 { font-size: 21pt; margin: 0 0 4px; letter-spacing: -0.5px; }
+  h2 { font-size: 13.5pt; margin: 26px 0 8px; padding-bottom: 4px; border-bottom: 2px solid var(--ink); break-after: avoid; }
+  h3 { font-size: 11pt; margin: 18px 0 6px; break-after: avoid; }
+  h3 .tag { font-size: 7.5pt; font-weight: 500; padding: 1px 6px; border-radius: 9px; margin-left: 6px; vertical-align: 2px; }
+  h4 { font-size: 9.8pt; margin: 12px 0 4px; break-after: avoid; }
+  p { margin: 4px 0 8px; }
+  ul, ol { margin: 4px 0 8px; padding-left: 20px; }
+  li { margin: 2px 0; }
+  .meta { color: var(--sub); font-size: 9pt; margin-bottom: 14px; }
+  .src { color: var(--sub); font-size: 8pt; font-family: "Noto Sans Mono CJK KR", monospace; break-after: avoid; }
+  table { border-collapse: collapse; width: 100%; margin: 6px 0 10px; font-size: 8.8pt; break-inside: avoid; }
+  th, td { border: 1px solid var(--line); padding: 4px 7px; text-align: left; vertical-align: top; }
+  th { background: var(--soft); font-weight: 700; }
+  td.num, th.num { text-align: right; white-space: nowrap; }
+  .box { border-radius: 6px; padding: 9px 12px; margin: 8px 0 12px; break-inside: avoid; }
+  .summary { background: var(--soft); border: 1px solid var(--line); }
+  .summary li { margin: 3px 0; }
+  .formula { background: var(--s-bg); border-left: 4px solid var(--s); font-size: 9.6pt; }
+  .formula b { color: #6d4710; }
+  .warn { background: var(--warn-bg); border-left: 4px solid var(--warn); }
+  .note { background: var(--soft); border-left: 4px solid var(--m); }
+  .quote { background: var(--g-bg); border-left: 4px solid var(--g); font-size: 9pt; }
+  .t-g { background: var(--g-bg); color: var(--g); }
+  .t-w { background: var(--w-bg); color: var(--w); }
+  .t-m { background: var(--m-bg); color: var(--m); }
+  .t-s { background: var(--s-bg); color: var(--s); }
+  .fix { background: #fde5e0; border-bottom: 2px solid var(--warn); padding: 0 2px; }
+  .page-break { break-before: page; }
+  .keep { break-inside: avoid; }
+  figure { margin: 8px 0 4px; break-inside: avoid; }
+  figcaption { color: var(--sub); font-size: 8.4pt; text-align: center; margin-top: 4px; }
+  .toc { columns: 2; column-gap: 24px; font-size: 9.6pt; margin: 10px 0 4px; padding-left: 0; list-style: none; }
+  .toc li { break-inside: avoid; }
+  .small { font-size: 8.5pt; color: var(--sub); }
+</style>
+</head>
+<body>
+
+<h1>서투리 판정 로직 정리</h1>
+<div class="meta">Gemma4 받아쓰기와 Whisper 억양 판별이 합쳐져 사투리 비율·표준어 점수·최종 점수가 나오기까지<br>
+2026-10-13 서비스 코드 기준 · <span class="mono">/data/seotturi/seotturi-web</span></div>
+
+<div class="box summary">
+  <b>한 줄씩 요약</b>
+  <ul>
+    <li><b>사투리 단어</b>는 Gemma4가 정합니다. Gemma가 <b>방언 줄에서 표준어 줄로 바꾼 어절</b>이 곧 사투리 단어입니다. 방언 사전이나 임계값은 쓰지 않아요.</li>
+    <li><b>지역과 억양 강도</b>는 Whisper 억양 모델이 정합니다. 먼저 "지역 억양인가"를 보고, 그다음 "어느 지역인가"를 보는 두 단계 판정입니다.</li>
+    <li><b>사투리 비율</b> = (사투리 단어 + 억양 어절) ÷ 전체 어절. 억양 어절은 Gemma가 바꾸지 않은 어절 수에 억양 강도를 곱한 값입니다.</li>
+    <li><b>최종 점수</b> = 표준어 점수(100 − 사투리 비율) + 답변 점수(단어 선택·유창성·정보). 200점 중 140점 이상이면 합격입니다.</li>
+    <li>발음 검사(wav2vec2)는 화면과 코치 피드백에만 나오고 점수에는 들어가지 않습니다.</li>
+  </ul>
+</div>
+
+<ul class="toc">
+  <li>1. 구성 요소</li>
+  <li>2. 전체 흐름</li>
+  <li>3. 녹음 자르기와 전처리</li>
+  <li>4. Gemma4 받아쓰기 (어댑터 켬)</li>
+  <li>5. Whisper 억양 판별</li>
+  <li>6. 사투리 단어 판정</li>
+  <li>7. 발음 검사</li>
+  <li>8. 유창성 측정</li>
+  <li>9. 답변 단위 종합: 지역 판정과 사투리 비율</li>
+  <li>10. Gemma4 코치 피드백 (어댑터 끔)</li>
+  <li>11. 기준표 채점</li>
+  <li>12. 최종 점수</li>
+  <li>부록 A. Gemma 어댑터 교체 기준</li>
+  <li>부록 B. 알아둘 점과 한계</li>
+  <li>부록 C. 코드 위치</li>
+</ul>
+
+<h2 style="break-before: page">1. 구성 요소</h2>
+<p>판정에는 프로세스 세 개, 모델 네 가지가 관여합니다. 웹 서버(app.py)가 녹음을 받아 각 모델에 보내고, 돌아온 결과로 점수를 계산합니다.</p>
+<table>
+  <tr><th>프로세스 (포트)</th><th>모델</th><th>하는 일</th><th>현재 상태</th></tr>
+  <tr><td><span class="mono">app.py</span> (8787)</td><td>—</td><td>녹음 수신, 전처리, 모델 호출, 사투리 비율·점수 계산</td><td>—</td></tr>
+  <tr><td><span class="mono">engine.py</span> (8788)</td><td><span class="tag t-g" style="padding:0 4px;border-radius:3px">Gemma 4 12B + LoRA</span><br>어댑터 켬</td><td>받아쓰기: <b>방언 줄</b>(들은 그대로)과 <b>표준어 줄</b>(바꾼 문장)</td><td>어댑터 <b>lora_s6c</b><br>(rank 144 결합 어댑터)</td></tr>
+  <tr><td><span class="mono">engine.py</span> (8788)</td><td><span class="tag t-g" style="padding:0 4px;border-radius:3px">Gemma 4 12B 기본</span><br>어댑터 끔</td><td>코치 피드백, 기준표 채점(단어 선택·정보)</td><td>—</td></tr>
+  <tr><td><span class="mono">accent.py</span> (8790)<br><span class="mono">/accent</span></td><td><span class="tag t-w" style="padding:0 4px;border-radius:3px">Whisper-large-v3</span><br>인코더(고정) + 판별 헤드 2개</td><td>억양: P(서울·경기), P(강원·충청·경상·제주)</td><td>4지역 <b>region4</b> + 표준/지역 <b>detector_mix</b><br>시험 macro-F1 0.812, 표준/지역 AUC 0.885</td></tr>
+  <tr><td><span class="mono">accent.py</span> (8790)<br><span class="mono">/pron</span></td><td>wav2vec2 XLS-R 300M<br>한국어 음소 인식</td><td>발음 검사: ㅚ·ㅙ·ㅞ가 ㅔ로 들리는지</td><td>표시 전용(점수 미반영)</td></tr>
+</table>
+<p class="small">tts.py(8789)는 코치 음성 합성용이라 판정과는 관계없습니다.</p>
+
+<h2>2. 전체 흐름</h2>
+<figure>
+<svg viewBox="0 0 714 700" width="100%" xmlns="http://www.w3.org/2000/svg" font-family="Noto Sans CJK KR" font-size="12">
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#55575c"/></marker>
+  </defs>
+  <style>
+    .b{stroke-width:1.4}.g{fill:#eaf1fd;stroke:#3b6fd8}.w{fill:#e4f4ee;stroke:#23866a}.m{fill:#f1f1ef;stroke:#8a8a85}.s{fill:#fdf3e1;stroke:#b7791f}.n{fill:#fff;stroke:#55575c}
+    .t{fill:#1d1d1f;text-anchor:middle}.h{font-weight:700}.sm{font-size:10.5px;fill:#55575c;text-anchor:middle}
+    .a{stroke:#55575c;stroke-width:1.3;fill:none;marker-end:url(#ar)}.lab{font-size:10px;fill:#55575c}
+  </style>
+  <!-- input -->
+  <rect class="b n" x="210" y="8" width="280" height="36" rx="8"/>
+  <text class="t h" x="350" y="31">녹음 (실시간 마이크 또는 파일)</text>
+  <path class="a" d="M350 44 V64"/>
+  <rect class="b m" x="110" y="66" width="480" height="52" rx="8"/>
+  <text class="t h" x="350" y="87">문장 단위로 자르기 · 전처리</text>
+  <text class="sm" x="350" y="106">브라우저: 0.7초 쉬면 끊음(최대 15초) → 서버: 앞뒤 무음 제거·음량 보정, 18초 넘으면 2~18초로</text>
+  <!-- fan out -->
+  <path class="a" d="M230 118 V150"/>
+  <path class="a" d="M570 118 V150"/>
+  <text class="lab" x="400" y="140" text-anchor="middle">조각마다 동시에</text>
+  <rect class="b g" x="20" y="152" width="420" height="62" rx="8"/>
+  <text class="t h" x="230" y="175">Gemma4 12B + LoRA (lora_s6c)</text>
+  <text class="sm" x="230" y="195">방언: 들은 그대로 / 표준어: 바꾼 문장</text>
+  <rect class="b w" x="460" y="152" width="220" height="62" rx="8"/>
+  <text class="t h" x="570" y="172">Whisper 억양 모델</text>
+  <text class="sm" x="570" y="190">P(서울·경기)</text>
+  <text class="sm" x="570" y="205">P(강원·충청·경상·제주)</text>
+  <!-- second row -->
+  <path class="a" d="M120 214 V246"/>
+  <text class="lab" x="126" y="236">방언 줄 + 녹음</text>
+  <path class="a" d="M340 214 V246"/>
+  <text class="lab" x="346" y="236">두 줄</text>
+  <path class="a" d="M570 214 V246"/>
+  <rect class="b m" x="20" y="248" width="200" height="62" rx="8"/>
+  <text class="t h" x="120" y="271">유창성 측정 · 발음 검사</text>
+  <text class="sm" x="120" y="290">말 속도·쉼·군말 / ㅚ·ㅙ·ㅞ→ㅔ</text>
+  <text class="sm" x="120" y="303">(발음은 표시만)</text>
+  <rect class="b g" x="240" y="248" width="200" height="62" rx="8"/>
+  <text class="t h" x="340" y="271">두 줄 어절 비교</text>
+  <text class="sm" x="340" y="290">바뀐 어절 = 사투리 단어</text>
+  <rect class="b w" x="460" y="248" width="220" height="62" rx="8"/>
+  <text class="t h" x="570" y="271">답변 단위 두 단계 판정</text>
+  <text class="sm" x="570" y="290">길이 가중 평균 → 지역 억양인가</text>
+  <text class="sm" x="570" y="303">→ 어느 지역인가 · 억양 강도</text>
+  <!-- ratio -->
+  <path class="a" d="M340 310 V342"/>
+  <path class="a" d="M570 310 V342"/>
+  <rect class="b s" x="240" y="344" width="440" height="58" rx="8"/>
+  <text class="t h" x="460" y="367">사투리 비율 = (사투리 단어 + 억양 어절) ÷ 전체 어절</text>
+  <text class="sm" x="460" y="389">억양 어절 = 안 바뀐 어절 × 억양 강도 · 표준어 점수 = 100 − 사투리 비율</text>
+  <!-- coach -->
+  <path class="a" d="M460 402 V434"/>
+  <text class="lab" x="466" y="424">표준어 문장 + 말투 분석</text>
+  <path class="a" d="M200 310 V420 Q200 436 216 436 H238"/>
+  <text class="lab" x="206" y="414">측정값</text>
+  <rect class="b g" x="240" y="436" width="440" height="58" rx="8"/>
+  <text class="t h" x="460" y="459">Gemma4 기본 (어댑터 끔)</text>
+  <text class="sm" x="460" y="480">코치 피드백(TIP·SUMMARY) + 기준표 채점(단어 선택, 정보·사실)</text>
+  <!-- answer score -->
+  <path class="a" d="M60 310 V526"/>
+  <text class="lab" x="66" y="470">유창성 점수</text>
+  <path class="a" d="M460 494 V526"/>
+  <rect class="b s" x="20" y="528" width="660" height="52" rx="8"/>
+  <text class="t h" x="350" y="550">답변 점수 = 단어 선택 0.25 + 유창성 0.25 + 정보·사실 0.5</text>
+  <text class="sm" x="350" y="569">발표 + 대본이면 정보 대신 대본 일치도 · 정보 점수가 없으면 단어 0.5 + 유창성 0.5</text>
+  <!-- final -->
+  <path class="a" d="M350 580 V612"/>
+  <path class="a" d="M680 373 H700 V646 H682"/>
+  <text class="lab" x="707" y="500" transform="rotate(90 707 500)" text-anchor="middle">표준어 점수</text>
+  <rect class="b s" x="20" y="614" width="660" height="56" rx="8" style="stroke-width:2"/>
+  <text class="t h" x="350" y="638" font-size="13">최종 점수 = 표준어 점수 + 답변 점수</text>
+  <text class="sm" x="350" y="658">200점 만점, 140점 이상 합격 · 화면에는 100점으로 환산 · 일상 모드는 점수 없음</text>
+  <!-- legend -->
+  <g font-size="10" transform="translate(20,684)">
+    <rect class="g" x="0" y="-9" width="12" height="10" rx="2"/><text x="17" y="0" fill="#55575c">Gemma4</text>
+    <rect class="w" x="80" y="-9" width="12" height="10" rx="2"/><text x="97" y="0" fill="#55575c">Whisper</text>
+    <rect class="m" x="160" y="-9" width="12" height="10" rx="2"/><text x="177" y="0" fill="#55575c">녹음에서 직접 측정</text>
+    <rect class="s" x="290" y="-9" width="12" height="10" rx="2"/><text x="307" y="0" fill="#55575c">점수 계산</text>
+  </g>
+</svg>
+<figcaption>그림 1. 녹음 한 번이 점수가 되기까지. 조각 단위 처리(위 세 줄)와 답변 단위 처리(아래)로 나뉩니다.</figcaption>
+</figure>
+
+<h4>처리 순서</h4>
+<ol>
+  <li><b>조각 단위</b>(<span class="mono">app.py</span> <code>transcribe</code>): 문장 조각마다 Gemma와 Whisper를 <b>동시에</b> 호출합니다. Gemma 결과가 나오면 방언 줄을 써서 발음 검사와 유창성 측정을 합니다. 이때 두 줄 어절 비교도 같이 해 둡니다.</li>
+  <li><b>답변 단위</b>(<span class="mono">app.py</span> <code>coach_feedback</code> → <code>summarize_speech</code>): 사용자가 답변을 마치면 조각들을 모아 지역을 판정하고 사투리 비율을 계산합니다.</li>
+  <li><b>코치</b>: 사투리 비율과 측정값을 프롬프트에 넣어 기본 Gemma에게 피드백을 받고, 기준표 채점을 합니다.</li>
+  <li><b>점수</b>: 표준어 점수와 답변 점수를 더해 합격 여부를 냅니다.</li>
+</ol>
+
+<h2>3. 녹음 자르기와 전처리</h2>
+<p>Gemma4는 한 번에 30초까지만 들을 수 있고, LoRA는 1~20초 발화로 학습했습니다. 그래서 녹음을 문장 길이로 잘라서 보냅니다.</p>
+
+<h3>3.1 브라우저에서 자르기 <span class="tag t-m">실시간 녹음</span></h3>
+<p class="src">web/js/recorder.js</p>
+<table>
+  <tr><th>항목</th><th>값</th><th>설명</th></tr>
+  <tr><td>분석 단위</td><td>20 ms 프레임</td><td>16 kHz 모노로 바꾼 뒤 프레임마다 음량(RMS)을 잽니다.</td></tr>
+  <tr><td>말소리 판단</td><td>음량 &gt; max(잡음 × 2.8, 0.006)</td><td>잡음 수준은 처음 0.3초로 정하고, 조용한 프레임마다 천천히 갱신합니다.</td></tr>
+  <tr><td>문장 끝</td><td>0.7초 쉼</td><td>말소리가 0.7초 없으면 한 조각을 끝냅니다.</td></tr>
+  <tr><td>앞뒤 여유</td><td>앞 0.2초, 뒤 0.24초</td><td>말 시작 전·끝난 뒤를 조금 남깁니다.</td></tr>
+  <tr><td>강제 자르기</td><td>15초</td><td>15초가 넘으면 최근 4초 중 가장 조용한 곳에서 자릅니다.</td></tr>
+  <tr><td>버리는 조각</td><td>말소리 0.25초 미만 또는 길이 0.5초 미만</td><td>기침·잡음 같은 짧은 소리는 보내지 않습니다.</td></tr>
+</table>
+<p>조각이 끝날 때마다 바로 서버(<code>/api/asr</code>)로 보내므로, 사용자가 말하는 동안 앞 문장의 받아쓰기가 화면에 뜹니다. 파일 업로드는 통째로 보내고 서버에서 자릅니다.</p>
+
+<h3>3.2 서버 전처리 <span class="tag t-m">모든 녹음</span></h3>
+<p class="src">server/app.py transcribe · server/analysis.py preprocess, split_audio</p>
+<ul>
+  <li><b>크기 제한</b>: 파일 25 MB, 길이 180초.</li>
+  <li><b>앞뒤 무음 자르기</b>: 20 ms 프레임 음량이 기준 max(하위 15% 음량 × 3, 0.004)을 넘는 첫 프레임과 마지막 프레임을 찾고, 앞뒤로 0.3초씩 남긴 채 잘라냅니다.</li>
+  <li><b>음량 보정</b>: 최대 진폭이 0.5 미만이면 0.9가 되도록 키웁니다(최대 10배).</li>
+  <li><b>빈 녹음</b>: 말소리 프레임이 합쳐서 0.25초 미만이면 모델을 부르지 않고 "빈 녹음"으로 돌려줍니다.</li>
+  <li><b>다시 자르기</b>: 18초가 넘으면 2~18초 사이에서 가장 조용한 지점(0.3초 평활, 뒤쪽 선호)을 골라 자릅니다. 0.3초 미만 조각은 버립니다.</li>
+</ul>
+
+<h2>4. Gemma4 받아쓰기 (어댑터 켬)</h2>
+<p class="src">server/engine.py _asr, _generate_ids, _finish · gemma4-dialect/common.py</p>
+
+<h3>4.1 입력과 프롬프트</h3>
+<p>조각 하나(0.3~30초, 16 kHz WAV)를 아래 프롬프트와 함께 넣습니다. 학습 때와 같은 프롬프트를 학습 코드(<span class="mono">common.py</span>)에서 그대로 가져다 씁니다.</p>
+<div class="box quote">다음 음성은 한국어 방언일 수 있습니다. 들은 그대로 받아쓰고, 의미와 말투를 유지한 표준어로 바꿔 주세요. 형식:<br>
+방언: &lt;들은 그대로&gt;<br>표준어: &lt;표준어 문장&gt;</div>
+<p>지금 어댑터(basic 형식)는 <b>지역을 출력하지 않습니다</b>. 지역은 전부 Whisper가 정합니다.</p>
+
+<h3>4.2 디코딩 가드 (guard1)</h3>
+<table>
+  <tr><th style="width:24%">장치</th><th>내용</th><th style="width:30%">이유</th></tr>
+  <tr><td>답 첫머리 강제</td><td>생성을 <code>방언:</code>으로 시작하게 붙여 둡니다.</td><td>예전 체크포인트에서 답의 5%가 엉뚱한 글자로 시작해 방언 줄을 잃었습니다.</td></tr>
+  <tr><td>그리디 디코딩</td><td>샘플링 없이 매번 가장 확률 높은 토큰을 고릅니다.</td><td>같은 녹음이면 항상 같은 결과.</td></tr>
+  <tr><td>토큰 예산</td><td>최대 토큰 = 32 + 16 × 초 (64~512)</td><td>길고 빠른 말이 잘리지 않게.</td></tr>
+  <tr><td>반복 중단</td><td>마지막 줄에서 20자 이하 덩어리가 8번 이상 연달아 나오면 생성을 멈춥니다.</td><td>"똥 똥 똥 …" 같은 반복 루프.</td></tr>
+  <tr><td>반복 보정</td><td>반복된 줄은 2번까지만 남깁니다. 방언 줄이 잘렸거나 표준어 줄이 없으면 "방언: …<br>표준어:"까지 주고 <b>표준어 줄만 다시</b> 생성합니다.</td><td>방언 줄은 들은 그대로 두고 변환만 다시.</td></tr>
+  <tr><td>프롬프트 룩업</td><td>조각이 하나일 때 입력에서 다음 토큰 후보를 찾는 가속(10토큰)을 씁니다. 엔진이 켜질 때 자체 시험에서 10% 이상 빠르고 CER이 0.02 넘게 나빠지지 않을 때만 켭니다.</td><td>속도.</td></tr>
+</table>
+<p class="small">반복 기준(8번)은 테스트 4,000문장 실측으로 정했습니다. 가드 없이 8번 이상 반복한 답이 v1 11개, r64 9개였고, 5번으로 낮추면 1~2개만 더 잡히는 반면 정답 문장의 0.016%도 5번 이상 반복이 들어 있었습니다.</p>
+
+<h3>4.3 형식 보정 (app.py)</h3>
+<ul>
+  <li>방언 줄과 표준어 줄이 <b>둘 다 비면</b> 모델 출력 원문을 양쪽에 넣습니다. 두 줄이 같으므로 이 조각의 사투리 단어는 0개가 됩니다.</li>
+  <li><b>한 줄만 있으면</b> 그 줄을 다른 줄에 복사합니다. 이때도 사투리 단어는 0개입니다.</li>
+</ul>
+<p>엔진은 사용자 요청을 모델 교체 채점보다 먼저 처리하고, 동시에 들어온 받아쓰기 요청은 최대 4개까지 묶어서 한 번에 돌립니다.</p>
+
+<h2>5. Whisper 억양 판별</h2>
+<p class="src">server/accent.py classify · server/app.py accent_probs, zone_reliable</p>
+
+<h3>5.1 쓰는 조건</h3>
+<p>웹 서버는 60초마다 억양 서비스 상태(<code>/status</code>)를 확인합니다. 아래 조건을 모두 만족해야 Whisper 결과를 씁니다.</p>
+<ul>
+  <li>서비스가 준비됨(<code>ready</code>)</li>
+  <li>서비스 중인 모델의 시험 세트 macro-F1 ≥ 0.5 (<code>SEOTTURI_ZONE_MIN_F1</code>, 지금 0.812)</li>
+</ul>
+<p>여기에 표준/지역 판별기(<code>std_model</code>)까지 있으면 <b>두 단계 모드</b>로 판정합니다. 지금 설정이 이 모드입니다. 조건을 못 맞추면 지역은 표시하지 않고, 사투리 비율은 Gemma의 사투리 단어만으로 계산합니다.</p>
+
+<h3>5.2 조각마다 하는 계산</h3>
+<p>Whisper-large-v3 인코더는 학습하지 않은(고정) 상태로 <b>한 번만</b> 돌리고, 그 결과를 헤드 두 개가 같이 씁니다(조각당 약 0.1초).</p>
+<table>
+  <tr><th style="width:22%">헤드</th><th>출력</th><th style="width:36%">학습 방식</th></tr>
+  <tr><td><b>detector_mix</b><br>표준/지역 판별기</td><td>q = P(서울·경기)</td><td>6지역 모델 두 개(ensemble_big, zone6_aug)의 P(서울·경기) 평균</td></tr>
+  <tr><td><b>region4</b><br>4지역 모델</td><td>지역 억양이라고 가정했을 때<br>P(강원), P(충청), P(경상), P(제주) (합 1)</td><td>서울 출생 화자 제외, 정답 = 녹음 세트의 지역, 녹음 환경 변형 8종으로 증강</td></tr>
+</table>
+<div class="box formula">
+  <b>표준 쪽 보정</b>: s = q × e<sup>2.7</sup> (서울·경기 로그 확률에 +2.7, 약 15배)<br>
+  <b>P(지역)</b> = 1 − s ÷ (s + 1 − q)<br>
+  <b>응답</b>: 서울·경기 = 1 − P(지역), &nbsp; 각 지역 = P(지역) × P(그 지역 | 지역 억양)
+</div>
+<p><b>보정 +2.7의 의미</b>: 코치에게는 표준 화자에게 "사투리 억양이 있어요"라고 하는 실수가 더 나쁘다고 보고, 표준 쪽으로 기울였습니다. 개발 세트에서 지역 화자 조각의 90%를 잡고 서울 화자 오판을 4%로 맞춘 값입니다. 다만 시험 세트에서는 조각 단위로 지역 화자 87%를 잡고, <b>서울 화자 23%를 지역으로 오판</b>했습니다(개발 세트가 훨씬 쉬웠음).</p>
+
+<h3>5.3 현재 성능</h3>
+<table>
+  <tr><th>지표 (시험 세트, 사투리 단어 없는 발화)</th><th class="num">값</th></tr>
+  <tr><td>4지역 + 서울·경기 macro-F1</td><td class="num">0.812</td></tr>
+  <tr><td>정확도</td><td class="num">0.823</td></tr>
+  <tr><td>표준/지역 판별 AUC</td><td class="num">0.885</td></tr>
+  <tr><td>벤치마크 세트 macro-F1</td><td class="num">0.817</td></tr>
+</table>
+<p class="small">대구·경북과 부산·울산·경남은 서로 잘 구별하지 못해(F1 0.53 / 0.61) "경상" 하나로 합쳐 보여 줍니다. 전라는 학습 데이터가 없어 판별 대상이 아닙니다.</p>
+
+<h2>6. 사투리 단어 판정</h2>
+<p class="src">server/analysis.py diff</p>
+<p>Gemma가 낸 방언 줄과 표준어 줄을 <b>어절 단위로 맞대어</b>(difflib SequenceMatcher) 바뀐 어절을 찾습니다.</p>
+<ol>
+  <li>두 줄을 공백으로 나누고, 각 어절에서 문장부호(. , ? ! ~ … · 따옴표 괄호 등)를 지웁니다.</li>
+  <li>같은 어절은 그대로 둡니다. 바뀐 것처럼 보여도 공백·문장부호만 다르면 같은 것으로 봅니다.</li>
+  <li>바뀌거나(replace) 방언 줄에만 있는(delete) 어절은 <b>사투리 어절</b>로 세고, 고침 하나("A → B")로 묶습니다. 붙어 있는 변경은 한 고침이 됩니다.</li>
+  <li>표준어 줄에만 있는 단어(insert)는 바로 앞 어절에 붙여 그 어절의 고침으로 칩니다.</li>
+</ol>
+<div class="box note">
+  <b>판정 기준이 따로 없습니다.</b> 방언 사전(97,335개)은 단어장 화면에만 쓰이고 판정에는 쓰이지 않습니다. Gemma가 표준어로 고쳤으면 사투리, 안 고쳤으면 표준어입니다.
+</div>
+<h4>예시 (실제 코드 실행 결과)</h4>
+<table>
+  <tr><th style="width:14%">방언 줄</th><td><span class="fix">그래가</span> 제가 그 일을 <span class="fix">마이</span> <span class="fix">했었거든예</span></td></tr>
+  <tr><th>표준어 줄</th><td>그래서 제가 그 일을 많이 했었거든요</td></tr>
+  <tr><th>고침</th><td>그래가 → 그래서 · 마이 했었거든예 → 많이 했었거든요</td></tr>
+  <tr><th>결과</th><td>사투리 어절 3개 / 전체 6어절 (단어 비율 50%)</td></tr>
+</table>
+
+<h2>7. 발음 검사</h2>
+<p class="src">server/pron.py · server/analysis.py pron_summary</p>
+<p>경상 화자가 ㅞ를 ㅔ로, ㅓ를 ㅡ로 발음하는 경향을 녹음에서 직접 재는 검사입니다. 점수에는 들어가지 않고, 화면과 코치 프롬프트에만 나옵니다.</p>
+<ol>
+  <li>Gemma의 <b>방언 줄</b>을 표준 발음 규칙(연음, 비음화, 경음화 등)으로 음소열로 바꿉니다.</li>
+  <li>음소 인식기(wav2vec2 XLS-R 300M, slplab 한국어 음소 모델)로 음소열을 녹음에 강제 정렬합니다(CTC).</li>
+  <li>검사할 소리마다 그 구간에서 "원래 소리"와 "합쳐진 소리"의 로그 사후확률비 평균을 냅니다.</li>
+  <li>이 값이 기준(서울·경기 화자의 하위 5%)보다 낮으면 "합쳐진 소리로 들림"으로 셉니다.</li>
+  <li>Gemma가 사투리로 고친 어절은 단어 교정에서 이미 안내하므로 빼고 셉니다.</li>
+  <li>한 답변에서 걸린 횟수가 서울 기준(5%)으로는 나오기 어려울 때만(단측 이항검정 p &lt; 0.05) 표시합니다.</li>
+</ol>
+<table>
+  <tr><th>검사</th><th class="num">기준값</th><th>서울 대비 차이</th><th>표시</th></tr>
+  <tr><td>ㅚ·ㅙ·ㅞ → ㅔ</td><td class="num">−6.44</td><td>서울 5.3%, 대구·경북 8.2%, 부산·울산·경남 11.8%</td><td><b>표시</b></td></tr>
+  <tr><td>ㅓ → ㅡ</td><td class="num">−1.16</td><td>서울 5.0%, 다른 지역 모두 7~11% (경상 특이가 아님)</td><td>숨김</td></tr>
+  <tr><td>ㅆ → ㅅ</td><td class="num">−2.57</td><td>서울 5.2%, 부산·울산·경남 3.3% (차이 없음)</td><td>숨김</td></tr>
+</table>
+
+<h2>8. 유창성 측정</h2>
+<p class="src">server/analysis.py fluency_clip, fluency_summary</p>
+<p>유창성은 Gemma가 매기지 않고 <b>녹음에서 직접</b> 잽니다. 음절 수와 군말은 Gemma의 방언 줄에서 셉니다.</p>
+<h4>조각마다 재는 값</h4>
+<ul>
+  <li><b>음절</b>: 방언 줄의 한글 글자 수 · <b>군말</b>: "그~", "어~"처럼 물결이 붙은 한 글자</li>
+  <li><b>쉼</b>: 조각 안에서 0.25초 이상 이어진 무음(앞뒤 무음은 제외)</li>
+  <li><b>말한 시간</b>: 조각 길이 − 앞뒤 무음 − 쉼 · <b>구간 수</b>: 쉼 개수 + 1</li>
+</ul>
+<h4>답변 점수 (0~100)</h4>
+<p>말한 시간이 6초 미만이거나 음절이 15개 미만이면 계산하지 않습니다. 기준값은 사투리 단어가 없는 서울·경기 화자 1,195클립에서 잰 값입니다. 다른 지역 화자도 비슷하게 나와서, 이 점수는 사투리가 아니라 전달을 잽니다.</p>
+<table>
+  <tr><th>지표</th><th>계산</th><th>0점</th><th>100점</th><th class="num">비중</th></tr>
+  <tr><td>말 속도</td><td>음절 ÷ 초</td><td>초당 2.0음절</td><td>4.0~5.5 (더 빠르면 2음절당 −40, 최저 40)</td><td class="num">35%</td></tr>
+  <tr><td>평균 연속 길이</td><td>음절 ÷ 구간 수</td><td>3음절</td><td>12음절</td><td class="num">25%</td></tr>
+  <tr><td>발성 비율</td><td>말한 시간 ÷ 전체</td><td>0.45</td><td>0.83</td><td class="num">25%</td></tr>
+  <tr><td>군말</td><td>분당 횟수</td><td>20회</td><td>4회</td><td class="num">15%</td></tr>
+</table>
+<p>면접·발표 모드에서는 문장 사이 3~60초 침묵 횟수도 세서 코치에게 알려 줍니다(점수에는 미반영).</p>
+
+<h2>9. 답변 단위 종합: 지역 판정과 사투리 비율</h2>
+<p class="src">server/analysis.py summarize_speech, zone_verdict, accent_any_zone</p>
+
+<h3>9.1 지역 판정 (두 단계)</h3>
+<ol>
+  <li>조각별 Whisper 확률을 <b>조각 길이로 가중 평균</b>합니다.</li>
+  <li><b>지역 억양인가</b>: P(지역) = 1 − P(서울·경기). 0.5 미만이면 <b>서울·경기</b>로 판정합니다.</li>
+  <li><b>어느 지역인가</b>: 네 지역 확률만 다시 나눠 합이 1이 되게 합니다. 1위가 0.6 미만이면 <b>"확실하지 않음"</b>, 0.6 이상이면 그 지역으로 판정합니다. 화면의 비율은 이 다시 나눈 값입니다.</li>
+</ol>
+<p>첫 문장부터 판정을 보여 줍니다(예전에는 8초 이상 쌓여야 보였지만 사용자 결정으로 0초로 바꿈).</p>
+<div class="box note">
+  <b>규칙을 고른 근거 (10/12 비교)</b>: 다섯 지역 중 1위 확률에 기준을 거는 방식은 답변의 25~30%를 "확실하지 않음"으로 남겼습니다. 정답 지역이 1위인데도 그랬어요(예: 지역 0.9 × 그 지역 0.65 = 0.585). 두 단계 방식은 네 문장 답변의 90%를 판정하고 85~87%를 맞힙니다. 대신 서울·경기 화자를 지역으로 보는 비율이 4~7%에서 14~17%로 늘었습니다(화자 약 100명 기준이라 대략적인 값).
+</div>
+
+<h3>9.2 사투리 비율</h3>
+<div class="box formula">
+  <b>억양 어절</b> = Σ (조각의 전체 어절 − 사투리 어절) × 조각의 억양 강도<br>
+  &nbsp;&nbsp;· 조각의 억양 강도 = 1 − 그 조각의 P(서울·경기)<br>
+  &nbsp;&nbsp;· 답변 전체 억양 강도 ≥ 0.5 이고, 그 조각의 억양 강도도 ≥ 0.5 인 조각만 셈<br>
+  <b>사투리 비율</b> = (사투리 어절 + 억양 어절) ÷ 전체 어절<br>
+  <b>표준어 점수</b> = 100 − 사투리 비율(%)
+</div>
+<ul>
+  <li>억양 어절은 Gemma가 <b>바꾸지 않은 어절</b>에만 더합니다. 사투리 단어를 억양으로 한 번 더 세지 않기 위해서예요.</li>
+  <li>지역이 "확실하지 않음"이어도 지역 억양이라는 판정(P(지역) ≥ 0.5)만 나면 억양 어절은 셉니다.</li>
+  <li>억양을 어절 단위의 연속값으로 넣는 방식은 사용자 결정이며, 사투리 밀도를 연속값으로 재는 연구(Johnson et al. 2022)를 따랐습니다.</li>
+</ul>
+
+<h3>9.3 화면에 나오는 값</h3>
+<table>
+  <tr><th>항목</th><th>계산</th></tr>
+  <tr><td>사투리 비율</td><td>(사투리 어절 + 억양 어절) ÷ 전체 어절</td></tr>
+  <tr><td>단어만 비율</td><td>사투리 어절 ÷ 전체 어절 (억양 제외)</td></tr>
+  <tr><td>억양 강도</td><td>답변 평균 1 − P(서울·경기)</td></tr>
+  <tr><td>지역 · 그 비율</td><td>두 단계 판정 결과와 다시 나눈 확률</td></tr>
+  <tr><td>사투리 교정 목록</td><td>Gemma의 고침("A → B")을 많이 나온 순서로</td></tr>
+</table>
+
+<h3>9.4 계산 예시 (실제 코드 실행 결과)</h3>
+<table>
+  <tr><th>조각</th><th>방언 줄</th><th class="num">어절</th><th class="num">사투리 어절</th><th class="num">P(서울·경기)</th><th class="num">억양 강도</th><th class="num">억양 어절</th></tr>
+  <tr><td>1</td><td>저는 그 프로젝트에서 팀장을 맡았습니다</td><td class="num">5</td><td class="num">0</td><td class="num">0.20</td><td class="num">0.80</td><td class="num">5 × 0.80 = 4.0</td></tr>
+  <tr><td>2</td><td>그래가 제가 그 일을 마이 했었거든예</td><td class="num">6</td><td class="num">3</td><td class="num">0.10</td><td class="num">0.90</td><td class="num">3 × 0.90 = 2.7</td></tr>
+  <tr><th colspan="2">합계</th><th class="num">11</th><th class="num">3</th><th class="num">평균 0.15</th><th class="num">0.85</th><th class="num">6.7</th></tr>
+</table>
+<ul>
+  <li>두 조각 모두 경상 쪽 확률이 높아 지역은 <b>경상(91%)</b>입니다.</li>
+  <li>단어만 비율은 3 ÷ 11 = <b>27%</b>입니다.</li>
+  <li>사투리 비율은 (3 + 6.7) ÷ 11 = <b>88%</b>, 표준어 점수는 <b>12점</b>입니다.</li>
+  <li>조각 1은 사투리 단어가 하나도 없는데, 억양 때문에 4.0어절이 사투리로 들어갔습니다.</li>
+</ul>
+
+<h2>10. Gemma4 코치 피드백 (어댑터 끔)</h2>
+<p class="src">server/app.py coach_feedback · server/analysis.py feedback_messages, parse_feedback</p>
+<p>코치는 LoRA를 끈 기본 Gemma 4 12B입니다. 녹음은 듣지 않고, 표준어 문장과 앞 단계의 측정값만 글로 받습니다. 최대 300토큰을 그리디로 생성하고 화면에 실시간으로 흘려보냅니다.</p>
+<h4>프롬프트에 들어가는 것</h4>
+<ul>
+  <li>상황, 상대(페르소나), 질문, 준비한 대본(앞 1,200자), 사용자가 원하는 피드백, 말한 시간</li>
+  <li>답변: 조각별 <b>표준어 줄</b>에 번호를 붙인 목록</li>
+  <li><b>말투 분석</b>: 전체 어절, 사투리 단어 수, 억양 어절, 사투리 비율, 단어만 비율, 억양 강도, 지역 판정</li>
+  <li><b>말하기 측정</b>: 말 속도, 평균 연속 길이, 군말, 긴 침묵, 유창성 점수(보통 범위 같이 표시)</li>
+  <li><b>발음 측정</b>: 표시 조건을 통과한 경우만</li>
+  <li>이미 따로 안내한 사투리 교정(최대 12개)과 대본에서 빠뜨린 문장(최대 6개)</li>
+  <li>모드별 평가 기준: 면접(직무 연결 경험, 두괄식, 근거·결과), 발표(구조, 핵심 메시지, 연결어·전달력), 일상(자연스러운 표준어 표현)</li>
+</ul>
+<h4>출력 형식과 규칙</h4>
+<table>
+  <tr><th style="width:18%">줄</th><th>내용</th></tr>
+  <tr><td><code>TIP</code></td><td>문장 번호 | 고칠 부분 인용(10자 이내) | 한 문장 조언. 최대 3개, 사투리 교정은 반복하지 않음</td></tr>
+  <tr><td><code>SCORE</code></td><td>단어 선택 | 유창성 | 정보·사실(직무·기술 정보가 없으면 -), 각 0~100. 일상 모드는 없음</td></tr>
+  <tr><td><code>SUMMARY</code></td><td>두 문장 이내 총평(잘한 점 하나, 다음에 할 일 하나)</td></tr>
+  <tr><td><code>QUESTION</code></td><td>발표 모드에서만, 청중이 할 법한 질문 하나</td></tr>
+</table>
+<p>규칙: "너는 음성을 직접 듣지 못했다. 발음·억양은 말투 분석만 근거로 한다", "말 속도·쉼·군말은 측정값만 근거로 하고 보통 범위면 언급하지 않는다" 등이 들어갑니다.</p>
+
+<h2>11. 기준표 채점</h2>
+<p class="src">server/app.py rubric_scores · server/analysis.py RUBRICS, rubric_messages, expected_score · server/engine.py _score</p>
+<p>코치가 SCORE 줄에 직접 쓴 숫자는 몇 개의 둥근 값에 몰리는 경향이 있어, 단어 선택과 정보·사실은 기준표로 다시 채점합니다(G-Eval 방식). 일상 모드는 채점하지 않습니다.</p>
+<ol>
+  <li>항목 하나마다 프롬프트를 따로 만듭니다. 상황, 질문, 표준어 문장, 그리고 1~5점 각각의 설명이 들어갑니다. "답변의 길이와 말투(사투리 여부)는 이 항목에서 평가하지 않는다. 숫자 하나로만 답한다"는 지시를 붙입니다.</li>
+  <li>기본 Gemma(어댑터 끔)가 답의 <b>첫 토큰</b>으로 "1"~"5"를 낼 확률을 읽습니다. 문장을 생성하지는 않습니다.</li>
+  <li>확률로 기댓값을 내서 0~100점으로 바꿉니다.</li>
+</ol>
+<div class="box formula">
+  <b>점수</b> = (Σ k × P(k) − 1) ÷ 4 × 100 &nbsp;&nbsp; (k = 1~5)<br>
+  예: P = (0.05, 0.10, 0.20, 0.50, 0.15) → 기댓값 3.6 → <b>65점</b><br>
+  다섯 숫자의 확률 합이 0.5 미만이면(숫자로 답하지 않음) 코치가 쓴 숫자를 그대로 씁니다.
+</div>
+<table>
+  <tr><th style="width:18%">항목</th><th>무엇을 보나</th><th style="width:30%">언제 채점하나</th></tr>
+  <tr><td>단어 선택</td><td>공식적인 자리에 맞는 정확한 어휘와 높임말</td><td>항상 (일상 모드 제외)</td></tr>
+  <tr><td>정보·사실</td><td>질문에 대한 구체적이고 정확한 정보와 근거</td><td>코치가 SCORE에 정보 점수를 적었을 때만</td></tr>
+  <tr><td>전달력</td><td>Gemma가 녹음을 직접 듣고 채점</td><td><b>꺼짐</b>. 측정한 유창성과 상관이 r = −0.17(n = 12)이라 노이즈로 판단</td></tr>
+</table>
+
+<h2>12. 최종 점수</h2>
+<p class="src">server/analysis.py answer_score, final_score, script_coverage</p>
+<h3>12.1 답변 점수</h3>
+<p>유창성은 녹음에서 잰 값(8장)을 쓰고, 잴 수 없을 때만 코치가 쓴 숫자를 씁니다.</p>
+<table>
+  <tr><th>경우</th><th>답변 점수</th></tr>
+  <tr><td>발표 모드 + 대본 있음</td><td>단어 선택 0.25 + 유창성 0.25 + <b>대본 일치도</b> 0.5</td></tr>
+  <tr><td>정보·사실 점수 있음</td><td>단어 선택 0.25 + 유창성 0.25 + 정보·사실 0.5</td></tr>
+  <tr><td>정보·사실 점수 없음</td><td>단어 선택 0.5 + 유창성 0.5</td></tr>
+  <tr><td>단어 선택이나 유창성이 없음</td><td>답변 점수 없음 → 표준어 점수만으로 판정</td></tr>
+</table>
+<h4>대본 일치도</h4>
+<p>대본 문장마다 "말했나"를 0~1로 냅니다. 두 값 중 큰 쪽을 씁니다.</p>
+<ul>
+  <li>BERTScore 재현율(klue/roberta-base 8층, 0.667~0.74를 0~1로): 바꿔 말한 문장도 잡습니다.</li>
+  <li>글자 바이그램 재현율(0.30~0.60을 0~1로): 받아쓰기 오류가 있어도 원문 그대로 읽은 문장을 잡습니다.</li>
+</ul>
+<p>문장 길이로 가중 평균해 0~100점을 내고, 0.5 미만인 문장은 "빠뜨린 문장"으로 표시합니다. 이 기준이면 소리 내 읽은 문장의 97%, 많이 바꿔 말한 문장의 70%를 말한 것으로 보고, 실제로 빠뜨린 문장은 3%만 말한 것으로 잘못 봅니다.</p>
+
+<h3>12.2 합격 판정</h3>
+<div class="box formula">
+  <b>최종 점수</b> = 표준어 점수 + 답변 점수 (200점 만점) → <b>140점 이상 합격</b>, 화면에는 ÷ 2 해서 100점으로 표시<br>
+  답변 점수가 없으면: 표준어 점수 × 2, <b>표준어 점수 70점 이상 합격</b><br>
+  일상 모드: 점수와 합격 판정 없음
+</div>
+<h4>예시 이어서 (9.4의 답변)</h4>
+<table>
+  <tr><th>표준어 점수</th><th>단어 선택</th><th>유창성(측정)</th><th>정보·사실</th><th>답변 점수</th><th>최종</th></tr>
+  <tr><td class="num">12</td><td class="num">80</td><td class="num">72</td><td class="num">75</td><td class="num">20 + 18 + 37.5 ≈ 76</td><td class="num"><b>88 / 200 → 불합격</b> (화면 44점)</td></tr>
+</table>
+<p>답변 내용이 괜찮아도 억양 때문에 표준어 점수가 12점이 되면 합격하기 어렵습니다. 부록 B의 첫 항목을 참고하세요.</p>
+
+<h2>부록 A. Gemma 어댑터 교체 기준</h2>
+<p class="src">server/engine.py _update (GATE_TOLERANCE, GATE_CONFIDENCE)</p>
+<p>엔진은 2시간마다 감시 목록(<code>SEOTTURI_WATCH</code>)에 새 체크포인트가 있는지 봅니다. 있으면 지금 어댑터와 함께 고정 벤치마크 160문장으로 채점하고, 아래 네 조건을 <b>모두</b> 통과할 때만 바꿉니다.</p>
+<table>
+  <tr><th style="width:30%">조건</th><th>기준</th></tr>
+  <tr><td>형식 준수율</td><td>지금 어댑터 이상</td></tr>
+  <tr><td>표준어 줄 CER</td><td>지금 어댑터 이하 (허용 오차 0, 10/7 사용자 결정)</td></tr>
+  <tr><td>방언 줄 CER</td><td>지금 어댑터 이하 (허용 오차 0)</td></tr>
+  <tr><td>짝지은 부트스트랩</td><td>두 줄 합산 CER이 더 나을 확률 ≥ 0.95</td></tr>
+</table>
+<p>두 어댑터는 같은 디코딩(guard1)으로 채점한 점수끼리만 비교합니다. 실제로는 160문장으로 0.005 정도의 작은 개선을 가려내지 못해서, 최근 두 번은 수동으로 교체했습니다.</p>
+<table>
+  <tr><th>날짜</th><th>교체</th><th>근거</th></tr>
+  <tr><td>10/11</td><td>lora_v1 → lora_r64c</td><td>사용자 결정. 자동 판정은 나을 확률 0.67(통과 못 함), data_test 4,000문장과 data_all 검증 1,199문장에서 더 나음</td></tr>
+  <tr><td>10/11</td><td>lora_r64c → <b>lora_s6c</b></td><td>사용자 결정. data_test 4,000문장(사이트와 같은 디코딩): 표준어 0.151 → 0.147, 방언 0.145 → 0.140, 나을 확률 1.00</td></tr>
+</table>
+<p>지금 감시 목록에는 학습이 끝난 lora_r64c와 lora_s6c만 있어서 자동 판정을 기다리는 후보는 없습니다. Whisper 억양 모델은 자동 교체가 없고, <code>accent-id/runs/served</code> 링크를 바꾼 뒤 <code>./run.sh restart-accent</code>로 수동 교체합니다.</p>
+
+<h2>부록 B. 알아둘 점과 한계</h2>
+<div class="box warn">
+  <b>1. 사투리 비율은 사실상 Whisper가 정합니다.</b><br>
+  억양 판정이 나면 Gemma가 바꾸지 않은 어절 대부분이 억양 어절로 들어갑니다. 9.4 예시에서 단어만 비율은 27%인데 사투리 비율은 88%였습니다.
+</div>
+<div class="box warn">
+  <b>2. 표준 화자가 사투리로 나올 수 있습니다.</b><br>
+  답변 단위 두 단계 판정에서 서울·경기 화자의 약 14~17%가 지역 억양으로 판정됩니다(화자 약 100명, 10/12). 조각 단위로는 시험 세트 서울 화자의 23%입니다. 이렇게 판정되면 표준어 단어만 써도 사투리 비율이 높게 나옵니다.
+</div>
+<div class="box warn">
+  <b>3. "두 줄의 차이"라는 판정 방식의 한계.</b><br>
+  Gemma가 표준어 줄을 쓰면서 사투리와 관계없이 어절을 바꾸면(다듬기, 띄어쓰기를 넘는 수정, 한쪽 줄만 오인식) 그 어절도 사투리로 셉니다. 반대로 형식이 깨져 두 줄이 같아지면 그 조각의 사투리 단어는 0개가 됩니다.
+</div>
+<div class="box note">
+  <b>4. 지역별 정확도 차이.</b> lora_s6c의 방언 줄 CER(data_test, 사이트와 같은 디코딩)은 제주 0.295, 강원 0.151, 충청 0.096, 경상 0.071입니다. 제주는 받아쓰기가 덜 정확해서 사투리 단어 판정도 덜 믿을 만합니다. 전라는 Gemma 학습(라벨 문제로 제외)과 Whisper 학습 모두에 없습니다.
+</div>
+<div class="box note">
+  <b>5. 억양 서비스가 꺼졌을 때.</b> 지역을 표시하지 않고, 사투리 비율은 Gemma 사투리 단어만으로 계산합니다. 같은 사람이라도 서비스 상태에 따라 점수가 크게 달라질 수 있습니다.
+</div>
+<div class="box note">
+  <b>6. 코치는 녹음을 듣지 않습니다.</b> 발음·억양·속도에 대한 피드백은 모두 앞 단계 측정값을 글로 받은 것입니다. 녹음을 듣고 채점하는 전달력은 검증에서 맞지 않아 꺼 두었습니다.
+</div>
+
+<h2>부록 C. 코드 위치</h2>
+<table>
+  <tr><th style="width:34%">단계</th><th>파일 · 함수</th></tr>
+  <tr><td>브라우저 문장 자르기</td><td class="mono">web/js/recorder.js</td></tr>
+  <tr><td>서버 전처리 · 조각 처리 전체</td><td class="mono">server/app.py transcribe · server/analysis.py preprocess, split_audio</td></tr>
+  <tr><td>Gemma 받아쓰기 · 디코딩 가드</td><td class="mono">server/engine.py _asr, _generate_ids, _finish, answer_budget, unloop</td></tr>
+  <tr><td>Gemma 프롬프트 · 출력 파싱</td><td class="mono">gemma4-dialect/common.py PROMPTS, prompt_inputs, parse_answer</td></tr>
+  <tr><td>Whisper 억양</td><td class="mono">server/accent.py load, classify · server/app.py accent_probs, zone_reliable</td></tr>
+  <tr><td>사투리 단어 판정</td><td class="mono">server/analysis.py diff</td></tr>
+  <tr><td>발음 검사</td><td class="mono">server/pron.py score, summary · server/analysis.py pron_summary</td></tr>
+  <tr><td>유창성</td><td class="mono">server/analysis.py fluency_clip, fluency_summary</td></tr>
+  <tr><td>지역 판정 · 사투리 비율</td><td class="mono">server/analysis.py summarize_speech, zone_verdict, accent_any_zone</td></tr>
+  <tr><td>코치 피드백</td><td class="mono">server/app.py coach_feedback · server/analysis.py feedback_messages</td></tr>
+  <tr><td>기준표 채점</td><td class="mono">server/app.py rubric_scores · server/analysis.py RUBRICS · server/engine.py _score</td></tr>
+  <tr><td>최종 점수 · 대본 일치도</td><td class="mono">server/analysis.py answer_score, final_score, script_coverage</td></tr>
+  <tr><td>어댑터 교체</td><td class="mono">server/engine.py _update, _compare · state/engine_state.json</td></tr>
+</table>
+<p class="small">경로는 <span class="mono">/data/seotturi/seotturi-web</span> 기준이고, <span class="mono">gemma4-dialect</span>는 <span class="mono">/data/seotturi/gemma4-dialect</span>, <span class="mono">accent-id</span>는 <span class="mono">/data/seotturi/accent-id</span>입니다.</p>
+
+</body>
+</html>
