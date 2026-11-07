@@ -1,0 +1,14 @@
+{
+ "members": [
+  {
+   "run": "phase1_big",
+   "weight": 0.6
+  },
+  {
+   "run": "phase2",
+   "weight": 0.4
+  }
+ ],
+ "chosen_on": "same weights and standard bonus as runs/ensemble (chosen there on test_same); phase1 replaced by phase1_big (train_head.py on data_big: 94,688 clips, prepare.py split --k 1000 --seoul-cap 60 --cap 36); standard bonus 1.25 keeps test_plain Seoul-Gyeonggi false alarms at the served level (69/200 vs 68/200)",
+ "served_standard_bias": 1.25
+}

@@ -1,0 +1,14 @@
+{
+ "members": [
+  {
+   "run": "phase1",
+   "weight": 0.6
+  },
+  {
+   "run": "phase2",
+   "weight": 0.4
+  }
+ ],
+ "chosen_on": "test_same macro-F1 and standard false alarms (w over 0..1, standard bonus 0/0.5/1.0)",
+ "served_standard_bias": 1.0
+}

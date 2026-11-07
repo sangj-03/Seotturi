@@ -1,0 +1,395 @@
+{
+ "dev": {
+  "n": 6030,
+  "macro_f1": 0.946,
+  "accuracy": 0.982,
+  "per_zone_f1": {
+   "표준": 0.902,
+   "지역": 0.99
+  },
+  "standard_vs_regional_auc": 0.973,
+  "regional_caught": "5422/5492",
+  "standard_called_regional": "39/538",
+  "coarse_accuracy": null,
+  "confusion": {
+   "표준": {
+    "표준": 499,
+    "지역": 39
+   },
+   "지역": {
+    "표준": 70,
+    "지역": 5422
+   }
+  },
+  "persons": {
+   "n": 1123,
+   "clips_per_person": 5.4,
+   "macro_f1": 0.937,
+   "accuracy": 0.989
+  },
+  "accuracy_by_age": {
+   "10대": "0.96 (n=268)",
+   "20대": "0.99 (n=2928)",
+   "30대": "0.99 (n=1128)",
+   "40대": "0.94 (n=506)",
+   "50대": "0.98 (n=840)",
+   "60대 이상": "0.98 (n=360)"
+  }
+ },
+ "temperature": 0.5,
+ "history": [
+  {
+   "epoch": 0,
+   "loss": 0.6106,
+   "dev_macro_f1": 0.621
+  },
+  {
+   "epoch": 1,
+   "loss": 0.5292,
+   "dev_macro_f1": 0.7
+  },
+  {
+   "epoch": 2,
+   "loss": 0.4832,
+   "dev_macro_f1": 0.787
+  },
+  {
+   "epoch": 3,
+   "loss": 0.4499,
+   "dev_macro_f1": 0.825
+  },
+  {
+   "epoch": 4,
+   "loss": 0.426,
+   "dev_macro_f1": 0.855
+  },
+  {
+   "epoch": 5,
+   "loss": 0.4105,
+   "dev_macro_f1": 0.878
+  },
+  {
+   "epoch": 6,
+   "loss": 0.4013,
+   "dev_macro_f1": 0.9
+  },
+  {
+   "epoch": 7,
+   "loss": 0.3949,
+   "dev_macro_f1": 0.896
+  },
+  {
+   "epoch": 8,
+   "loss": 0.389,
+   "dev_macro_f1": 0.908
+  },
+  {
+   "epoch": 9,
+   "loss": 0.3847,
+   "dev_macro_f1": 0.919
+  },
+  {
+   "epoch": 10,
+   "loss": 0.3809,
+   "dev_macro_f1": 0.902
+  },
+  {
+   "epoch": 11,
+   "loss": 0.3777,
+   "dev_macro_f1": 0.918
+  },
+  {
+   "epoch": 12,
+   "loss": 0.3751,
+   "dev_macro_f1": 0.921
+  },
+  {
+   "epoch": 13,
+   "loss": 0.3718,
+   "dev_macro_f1": 0.925
+  },
+  {
+   "epoch": 14,
+   "loss": 0.3696,
+   "dev_macro_f1": 0.929
+  },
+  {
+   "epoch": 15,
+   "loss": 0.3668,
+   "dev_macro_f1": 0.935
+  },
+  {
+   "epoch": 16,
+   "loss": 0.3655,
+   "dev_macro_f1": 0.926
+  },
+  {
+   "epoch": 17,
+   "loss": 0.3638,
+   "dev_macro_f1": 0.931
+  },
+  {
+   "epoch": 18,
+   "loss": 0.362,
+   "dev_macro_f1": 0.931
+  },
+  {
+   "epoch": 19,
+   "loss": 0.3604,
+   "dev_macro_f1": 0.939
+  },
+  {
+   "epoch": 20,
+   "loss": 0.3589,
+   "dev_macro_f1": 0.93
+  },
+  {
+   "epoch": 21,
+   "loss": 0.3571,
+   "dev_macro_f1": 0.944
+  },
+  {
+   "epoch": 22,
+   "loss": 0.356,
+   "dev_macro_f1": 0.936
+  },
+  {
+   "epoch": 23,
+   "loss": 0.3547,
+   "dev_macro_f1": 0.934
+  },
+  {
+   "epoch": 24,
+   "loss": 0.3536,
+   "dev_macro_f1": 0.939
+  },
+  {
+   "epoch": 25,
+   "loss": 0.3522,
+   "dev_macro_f1": 0.941
+  },
+  {
+   "epoch": 26,
+   "loss": 0.3514,
+   "dev_macro_f1": 0.939
+  },
+  {
+   "epoch": 27,
+   "loss": 0.3505,
+   "dev_macro_f1": 0.946
+  },
+  {
+   "epoch": 28,
+   "loss": 0.3489,
+   "dev_macro_f1": 0.942
+  },
+  {
+   "epoch": 29,
+   "loss": 0.3485,
+   "dev_macro_f1": 0.944
+  },
+  {
+   "epoch": 30,
+   "loss": 0.3477,
+   "dev_macro_f1": 0.943
+  },
+  {
+   "epoch": 31,
+   "loss": 0.3471,
+   "dev_macro_f1": 0.945
+  },
+  {
+   "epoch": 32,
+   "loss": 0.3468,
+   "dev_macro_f1": 0.945
+  },
+  {
+   "epoch": 33,
+   "loss": 0.3463,
+   "dev_macro_f1": 0.944
+  }
+ ],
+ "layer_weights": [
+  0.0028,
+  0.0006,
+  0.0006,
+  0.0007,
+  0.0008,
+  0.001,
+  0.0028,
+  0.0051,
+  0.0987,
+  0.0877,
+  0.0224,
+  0.0027,
+  0.0703,
+  0.3538,
+  0.0485,
+  0.0032,
+  0.0006,
+  0.005,
+  0.006,
+  0.0069,
+  0.1066,
+  0.0219,
+  0.0067,
+  0.0022,
+  0.0012,
+  0.0009,
+  0.0006,
+  0.0006,
+  0.0007,
+  0.0008,
+  0.0008,
+  0.001,
+  0.1357
+ ],
+ "std2_test_plain": {
+  "n": 1200,
+  "macro_f1": 0.753,
+  "accuracy": 0.888,
+  "per_zone_f1": {
+   "표준": 0.571,
+   "지역": 0.936
+  },
+  "standard_vs_regional_auc": 0.735,
+  "regional_caught": "977/1000",
+  "standard_called_regional": "111/200",
+  "coarse_accuracy": null,
+  "confusion": {
+   "표준": {
+    "표준": 89,
+    "지역": 111
+   },
+   "지역": {
+    "표준": 23,
+    "지역": 977
+   }
+  },
+  "persons": {
+   "n": 963,
+   "clips_per_person": 1.2,
+   "macro_f1": 0.763,
+   "accuracy": 0.934
+  },
+  "accuracy_by_age": {
+   "10대": "0.94 (n=53)",
+   "20대": "0.92 (n=613)",
+   "30대": "0.88 (n=212)",
+   "40대": "0.90 (n=80)",
+   "50대": "0.73 (n=178)",
+   "60대 이상": "0.97 (n=64)"
+  }
+ },
+ "std2_test_same": {
+  "n": 1678,
+  "macro_f1": 0.532,
+  "accuracy": 0.927,
+  "per_zone_f1": {
+   "표준": 0.102,
+   "지역": 0.962
+  },
+  "standard_vs_regional_auc": 0.622,
+  "regional_caught": "1548/1636",
+  "standard_called_regional": "35/42",
+  "coarse_accuracy": null,
+  "confusion": {
+   "표준": {
+    "표준": 7,
+    "지역": 35
+   },
+   "지역": {
+    "표준": 88,
+    "지역": 1548
+   }
+  },
+  "persons": {
+   "n": 1225,
+   "clips_per_person": 1.4,
+   "macro_f1": 0.557,
+   "accuracy": 0.942
+  },
+  "accuracy_by_age": {
+   "10대": "0.90 (n=84)",
+   "20대": "0.93 (n=1012)",
+   "30대": "0.94 (n=340)",
+   "40대": "0.94 (n=80)",
+   "50대": "0.88 (n=128)",
+   "60대 이상": "0.88 (n=34)"
+  }
+ },
+ "std2_test_dialect": {
+  "n": 1086,
+  "macro_f1": 0.794,
+  "accuracy": 0.99,
+  "per_zone_f1": {
+   "표준": 0.593,
+   "지역": 0.995
+  },
+  "standard_vs_regional_auc": 0.903,
+  "regional_caught": "1067/1076",
+  "standard_called_regional": "2/10",
+  "coarse_accuracy": null,
+  "confusion": {
+   "표준": {
+    "표준": 8,
+    "지역": 2
+   },
+   "지역": {
+    "표준": 9,
+    "지역": 1067
+   }
+  },
+  "persons": {
+   "n": 959,
+   "clips_per_person": 1.1,
+   "macro_f1": 0.818,
+   "accuracy": 0.991
+  },
+  "accuracy_by_age": {
+   "10대": "0.90 (n=21)",
+   "20대": "0.99 (n=542)",
+   "30대": "0.99 (n=192)",
+   "40대": "0.98 (n=85)",
+   "50대": "0.99 (n=149)",
+   "60대 이상": "0.98 (n=97)"
+  }
+ },
+ "std2_bench": {
+  "n": 90,
+  "macro_f1": 0.76,
+  "accuracy": 0.878,
+  "per_zone_f1": {
+   "표준": 0.593,
+   "지역": 0.928
+  },
+  "standard_vs_regional_auc": 0.819,
+  "regional_caught": "71/75",
+  "standard_called_regional": "7/15",
+  "coarse_accuracy": null,
+  "confusion": {
+   "표준": {
+    "표준": 8,
+    "지역": 7
+   },
+   "지역": {
+    "표준": 4,
+    "지역": 71
+   }
+  },
+  "persons": {
+   "n": 90,
+   "clips_per_person": 1.0,
+   "macro_f1": 0.76,
+   "accuracy": 0.878
+  },
+  "accuracy_by_age": {
+   "10대": "1.00 (n=2)",
+   "20대": "0.92 (n=52)",
+   "30대": "0.82 (n=11)",
+   "40대": "0.83 (n=6)",
+   "50대": "0.73 (n=11)",
+   "60대 이상": "0.88 (n=8)"
+  }
+ }
+}

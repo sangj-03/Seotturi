@@ -1,0 +1,370 @@
+{
+ "clips": 8799,
+ "speakers": {
+  "충청": 250,
+  "서울·경기": 100,
+  "강원": 250,
+  "경상": 250,
+  "제주": 250
+ },
+ "std_bias": 2.7,
+ "min_conf": 0.6,
+ "conditions": {
+  "원본": {
+   "1": {
+    "speakers": 1100,
+    "median_seconds": 4.0,
+    "region4_macro_f1": 0.842,
+    "region4_macro_f1_ci": [
+     0.819,
+     0.864
+    ],
+    "region4_accuracy": 0.843,
+    "per_region_f1": {
+     "강원": 0.822,
+     "충청": 0.782,
+     "경상": 0.846,
+     "제주": 0.918
+    },
+    "detector_auc": 0.908,
+    "regional_caught": 0.883,
+    "seoul_called_regional": 0.17,
+    "app_macro_f1": 0.72,
+    "app_per_zone_f1": {
+     "서울·경기": 0.57,
+     "강원": 0.784,
+     "충청": 0.601,
+     "경상": 0.753,
+     "제주": 0.89
+    },
+    "app_unsure": 0.189,
+    "app_accuracy_when_sure": 0.825
+   },
+   "2": {
+    "speakers": 1100,
+    "median_seconds": 8.3,
+    "region4_macro_f1": 0.873,
+    "region4_macro_f1_ci": [
+     0.85,
+     0.893
+    ],
+    "region4_accuracy": 0.874,
+    "per_region_f1": {
+     "강원": 0.849,
+     "충청": 0.824,
+     "경상": 0.867,
+     "제주": 0.951
+    },
+    "detector_auc": 0.922,
+    "regional_caught": 0.909,
+    "seoul_called_regional": 0.16,
+    "app_macro_f1": 0.74,
+    "app_per_zone_f1": {
+     "서울·경기": 0.623,
+     "강원": 0.751,
+     "충청": 0.644,
+     "경상": 0.776,
+     "제주": 0.905
+    },
+    "app_unsure": 0.233,
+    "app_accuracy_when_sure": 0.871
+   },
+   "3": {
+    "speakers": 1100,
+    "median_seconds": 12.6,
+    "region4_macro_f1": 0.882,
+    "region4_macro_f1_ci": [
+     0.861,
+     0.9
+    ],
+    "region4_accuracy": 0.883,
+    "per_region_f1": {
+     "강원": 0.858,
+     "충청": 0.841,
+     "경상": 0.878,
+     "제주": 0.951
+    },
+    "detector_auc": 0.929,
+    "regional_caught": 0.907,
+    "seoul_called_regional": 0.19,
+    "app_macro_f1": 0.743,
+    "app_per_zone_f1": {
+     "서울·경기": 0.644,
+     "강원": 0.765,
+     "충청": 0.647,
+     "경상": 0.764,
+     "제주": 0.894
+    },
+    "app_unsure": 0.255,
+    "app_accuracy_when_sure": 0.888
+   },
+   "4": {
+    "speakers": 1100,
+    "median_seconds": 17.1,
+    "region4_macro_f1": 0.895,
+    "region4_macro_f1_ci": [
+     0.876,
+     0.914
+    ],
+    "region4_accuracy": 0.896,
+    "per_region_f1": {
+     "강원": 0.866,
+     "충청": 0.855,
+     "경상": 0.884,
+     "제주": 0.976
+    },
+    "detector_auc": 0.935,
+    "regional_caught": 0.912,
+    "seoul_called_regional": 0.18,
+    "app_macro_f1": 0.753,
+    "app_per_zone_f1": {
+     "서울·경기": 0.653,
+     "강원": 0.761,
+     "충청": 0.649,
+     "경상": 0.797,
+     "제주": 0.904
+    },
+    "app_unsure": 0.253,
+    "app_accuracy_when_sure": 0.898
+   },
+   "6": {
+    "speakers": 1100,
+    "median_seconds": 25.7,
+    "region4_macro_f1": 0.909,
+    "region4_macro_f1_ci": [
+     0.89,
+     0.926
+    ],
+    "region4_accuracy": 0.91,
+    "per_region_f1": {
+     "강원": 0.87,
+     "충청": 0.88,
+     "경상": 0.914,
+     "제주": 0.974
+    },
+    "detector_auc": 0.94,
+    "regional_caught": 0.925,
+    "seoul_called_regional": 0.2,
+    "app_macro_f1": 0.761,
+    "app_per_zone_f1": {
+     "서울·경기": 0.661,
+     "강원": 0.75,
+     "충청": 0.667,
+     "경상": 0.81,
+     "제주": 0.916
+    },
+    "app_unsure": 0.25,
+    "app_accuracy_when_sure": 0.905
+   },
+   "8": {
+    "speakers": 1099,
+    "median_seconds": 34.5,
+    "region4_macro_f1": 0.907,
+    "region4_macro_f1_ci": [
+     0.89,
+     0.924
+    ],
+    "region4_accuracy": 0.908,
+    "per_region_f1": {
+     "강원": 0.865,
+     "충청": 0.88,
+     "경상": 0.907,
+     "제주": 0.976
+    },
+    "detector_auc": 0.944,
+    "regional_caught": 0.92,
+    "seoul_called_regional": 0.192,
+    "app_macro_f1": 0.763,
+    "app_per_zone_f1": {
+     "서울·경기": 0.67,
+     "강원": 0.751,
+     "충청": 0.653,
+     "경상": 0.821,
+     "제주": 0.923
+    },
+    "app_unsure": 0.254,
+    "app_accuracy_when_sure": 0.912
+   }
+  },
+  "사이트 전처리": {
+   "1": {
+    "speakers": 1100,
+    "median_seconds": 3.6,
+    "region4_macro_f1": 0.832,
+    "region4_macro_f1_ci": [
+     0.808,
+     0.854
+    ],
+    "region4_accuracy": 0.833,
+    "per_region_f1": {
+     "강원": 0.823,
+     "충청": 0.766,
+     "경상": 0.845,
+     "제주": 0.893
+    },
+    "detector_auc": 0.901,
+    "regional_caught": 0.882,
+    "seoul_called_regional": 0.24,
+    "app_macro_f1": 0.7,
+    "app_per_zone_f1": {
+     "서울·경기": 0.536,
+     "강원": 0.752,
+     "충청": 0.595,
+     "경상": 0.744,
+     "제주": 0.874
+    },
+    "app_unsure": 0.218,
+    "app_accuracy_when_sure": 0.822
+   },
+   "2": {
+    "speakers": 1100,
+    "median_seconds": 7.7,
+    "region4_macro_f1": 0.859,
+    "region4_macro_f1_ci": [
+     0.837,
+     0.88
+    ],
+    "region4_accuracy": 0.86,
+    "per_region_f1": {
+     "강원": 0.821,
+     "충청": 0.824,
+     "경상": 0.877,
+     "제주": 0.912
+    },
+    "detector_auc": 0.915,
+    "regional_caught": 0.901,
+    "seoul_called_regional": 0.24,
+    "app_macro_f1": 0.711,
+    "app_per_zone_f1": {
+     "서울·경기": 0.564,
+     "강원": 0.748,
+     "충청": 0.611,
+     "경상": 0.771,
+     "제주": 0.863
+    },
+    "app_unsure": 0.279,
+    "app_accuracy_when_sure": 0.873
+   },
+   "3": {
+    "speakers": 1100,
+    "median_seconds": 11.6,
+    "region4_macro_f1": 0.882,
+    "region4_macro_f1_ci": [
+     0.861,
+     0.901
+    ],
+    "region4_accuracy": 0.883,
+    "per_region_f1": {
+     "강원": 0.852,
+     "충청": 0.842,
+     "경상": 0.892,
+     "제주": 0.941
+    },
+    "detector_auc": 0.92,
+    "regional_caught": 0.906,
+    "seoul_called_regional": 0.24,
+    "app_macro_f1": 0.712,
+    "app_per_zone_f1": {
+     "서울·경기": 0.606,
+     "강원": 0.751,
+     "충청": 0.595,
+     "경상": 0.733,
+     "제주": 0.876
+    },
+    "app_unsure": 0.304,
+    "app_accuracy_when_sure": 0.888
+   },
+   "4": {
+    "speakers": 1100,
+    "median_seconds": 15.7,
+    "region4_macro_f1": 0.898,
+    "region4_macro_f1_ci": [
+     0.878,
+     0.916
+    ],
+    "region4_accuracy": 0.899,
+    "per_region_f1": {
+     "강원": 0.862,
+     "충청": 0.861,
+     "경상": 0.913,
+     "제주": 0.957
+    },
+    "detector_auc": 0.934,
+    "regional_caught": 0.907,
+    "seoul_called_regional": 0.23,
+    "app_macro_f1": 0.729,
+    "app_per_zone_f1": {
+     "서울·경기": 0.622,
+     "강원": 0.758,
+     "충청": 0.617,
+     "경상": 0.763,
+     "제주": 0.882
+    },
+    "app_unsure": 0.3,
+    "app_accuracy_when_sure": 0.905
+   },
+   "6": {
+    "speakers": 1100,
+    "median_seconds": 23.7,
+    "region4_macro_f1": 0.906,
+    "region4_macro_f1_ci": [
+     0.887,
+     0.923
+    ],
+    "region4_accuracy": 0.907,
+    "per_region_f1": {
+     "강원": 0.869,
+     "충청": 0.864,
+     "경상": 0.932,
+     "제주": 0.959
+    },
+    "detector_auc": 0.939,
+    "regional_caught": 0.914,
+    "seoul_called_regional": 0.24,
+    "app_macro_f1": 0.735,
+    "app_per_zone_f1": {
+     "서울·경기": 0.639,
+     "강원": 0.752,
+     "충청": 0.621,
+     "경상": 0.761,
+     "제주": 0.9
+    },
+    "app_unsure": 0.306,
+    "app_accuracy_when_sure": 0.917
+   },
+   "8": {
+    "speakers": 1099,
+    "median_seconds": 31.5,
+    "region4_macro_f1": 0.911,
+    "region4_macro_f1_ci": [
+     0.892,
+     0.928
+    ],
+    "region4_accuracy": 0.912,
+    "per_region_f1": {
+     "강원": 0.87,
+     "충청": 0.871,
+     "경상": 0.931,
+     "제주": 0.972
+    },
+    "detector_auc": 0.942,
+    "regional_caught": 0.913,
+    "seoul_called_regional": 0.263,
+    "app_macro_f1": 0.743,
+    "app_per_zone_f1": {
+     "서울·경기": 0.645,
+     "강원": 0.755,
+     "충청": 0.619,
+     "경상": 0.785,
+     "제주": 0.908
+    },
+    "app_unsure": 0.298,
+    "app_accuracy_when_sure": 0.921
+   }
+  }
+ },
+ "system": {
+  "region": "region4",
+  "detector": "detector_mix"
+ }
+}

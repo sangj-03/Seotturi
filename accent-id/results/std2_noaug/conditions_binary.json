@@ -1,0 +1,47 @@
+{
+ "standard_bias": 0.0,
+ "conditions": {
+  "원본": {
+   "n": 1185,
+   "auc": 0.755,
+   "regional_caught": 0.952,
+   "standard_called_regional": 0.58
+  },
+  "사이트 전처리": {
+   "n": 1185,
+   "auc": 0.745,
+   "regional_caught": 0.962,
+   "standard_called_regional": 0.685
+  },
+  "사이트+잡음제거": {
+   "n": 1185,
+   "auc": 0.647,
+   "regional_caught": 0.98,
+   "standard_called_regional": 0.815
+  },
+  "무음화": {
+   "n": 1185,
+   "auc": 0.534,
+   "regional_caught": 0.993,
+   "standard_called_regional": 0.815
+  },
+  "말소리만": {
+   "n": 1185,
+   "auc": 0.708,
+   "regional_caught": 0.962,
+   "standard_called_regional": 0.635
+  },
+  "앞 2초": {
+   "n": 1185,
+   "auc": 0.671,
+   "regional_caught": 0.96,
+   "standard_called_regional": 0.77
+  },
+  "배경만": {
+   "n": 637,
+   "auc": 0.527,
+   "regional_caught": 0.925,
+   "standard_called_regional": 0.915
+  }
+ }
+}

@@ -1,0 +1,15 @@
+{
+ "members": [
+  {
+   "run": "ensemble_big",
+   "weight": 0.5
+  },
+  {
+   "run": "zone6_aug",
+   "weight": 0.5
+  }
+ ],
+ "chosen_on": "standard detector candidate: the served six-zone ensemble and the augmented six-zone head (zone6_aug) mixed in log-probability; only P(서울·경기) is used (region4 names the region)",
+ "served_standard_bias": 2.7,
+ "bias_chosen_on": "calibrate_std.py: dev clean + augmented, smallest Seoul-Gyeonggi false alarm with regional caught >= 90% (caught 90.1%, false alarm 3.5%)"
+}

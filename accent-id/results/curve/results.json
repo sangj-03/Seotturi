@@ -1,0 +1,342 @@
+[
+ {
+  "curve": "persons",
+  "value": 0.25,
+  "seed": 0,
+  "clips": 13573,
+  "persons": 4450,
+  "epochs": 36,
+  "dev_macro_f1": 0.71,
+  "test_plain": {
+   "macro_f1": 0.56,
+   "accuracy": 0.565,
+   "auc": 0.817,
+   "persons_macro_f1": 0.584
+  },
+  "test_same": {
+   "macro_f1": 0.505,
+   "accuracy": 0.601,
+   "auc": 0.767,
+   "persons_macro_f1": 0.519
+  },
+  "test_dialect": {
+   "macro_f1": 0.611,
+   "accuracy": 0.727,
+   "auc": 0.856,
+   "persons_macro_f1": 0.612
+  },
+  "bench": {
+   "macro_f1": 0.523,
+   "accuracy": 0.511,
+   "auc": 0.743,
+   "persons_macro_f1": 0.523
+  },
+  "seconds": 28
+ },
+ {
+  "curve": "persons",
+  "value": 0.25,
+  "seed": 1,
+  "clips": 13663,
+  "persons": 4450,
+  "epochs": 40,
+  "dev_macro_f1": 0.717,
+  "test_plain": {
+   "macro_f1": 0.575,
+   "accuracy": 0.581,
+   "auc": 0.816,
+   "persons_macro_f1": 0.587
+  },
+  "test_same": {
+   "macro_f1": 0.488,
+   "accuracy": 0.585,
+   "auc": 0.697,
+   "persons_macro_f1": 0.517
+  },
+  "test_dialect": {
+   "macro_f1": 0.589,
+   "accuracy": 0.71,
+   "auc": 0.879,
+   "persons_macro_f1": 0.59
+  },
+  "bench": {
+   "macro_f1": 0.567,
+   "accuracy": 0.567,
+   "auc": 0.815,
+   "persons_macro_f1": 0.567
+  },
+  "seconds": 28
+ },
+ {
+  "curve": "persons",
+  "value": 0.5,
+  "seed": 0,
+  "clips": 27322,
+  "persons": 8899,
+  "epochs": 38,
+  "dev_macro_f1": 0.768,
+  "test_plain": {
+   "macro_f1": 0.612,
+   "accuracy": 0.614,
+   "auc": 0.857,
+   "persons_macro_f1": 0.638
+  },
+  "test_same": {
+   "macro_f1": 0.531,
+   "accuracy": 0.617,
+   "auc": 0.744,
+   "persons_macro_f1": 0.541
+  },
+  "test_dialect": {
+   "macro_f1": 0.644,
+   "accuracy": 0.751,
+   "auc": 0.936,
+   "persons_macro_f1": 0.643
+  },
+  "bench": {
+   "macro_f1": 0.636,
+   "accuracy": 0.633,
+   "auc": 0.915,
+   "persons_macro_f1": 0.636
+  },
+  "seconds": 57
+ },
+ {
+  "curve": "persons",
+  "value": 0.5,
+  "seed": 1,
+  "clips": 27409,
+  "persons": 8899,
+  "epochs": 32,
+  "dev_macro_f1": 0.771,
+  "test_plain": {
+   "macro_f1": 0.601,
+   "accuracy": 0.603,
+   "auc": 0.778,
+   "persons_macro_f1": 0.617
+  },
+  "test_same": {
+   "macro_f1": 0.51,
+   "accuracy": 0.614,
+   "auc": 0.659,
+   "persons_macro_f1": 0.527
+  },
+  "test_dialect": {
+   "macro_f1": 0.633,
+   "accuracy": 0.741,
+   "auc": 0.919,
+   "persons_macro_f1": 0.631
+  },
+  "bench": {
+   "macro_f1": 0.579,
+   "accuracy": 0.578,
+   "auc": 0.818,
+   "persons_macro_f1": 0.579
+  },
+  "seconds": 38
+ },
+ {
+  "curve": "persons",
+  "value": 1.0,
+  "seed": 0,
+  "clips": 54626,
+  "persons": 17797,
+  "epochs": 30,
+  "dev_macro_f1": 0.797,
+  "test_plain": {
+   "macro_f1": 0.632,
+   "accuracy": 0.634,
+   "auc": 0.856,
+   "persons_macro_f1": 0.653
+  },
+  "test_same": {
+   "macro_f1": 0.524,
+   "accuracy": 0.621,
+   "auc": 0.737,
+   "persons_macro_f1": 0.539
+  },
+  "test_dialect": {
+   "macro_f1": 0.685,
+   "accuracy": 0.78,
+   "auc": 0.917,
+   "persons_macro_f1": 0.689
+  },
+  "bench": {
+   "macro_f1": 0.682,
+   "accuracy": 0.678,
+   "auc": 0.832,
+   "persons_macro_f1": 0.682
+  },
+  "seconds": 71
+ },
+ {
+  "curve": "persons",
+  "value": 1.0,
+  "seed": 1,
+  "clips": 54626,
+  "persons": 17797,
+  "epochs": 27,
+  "dev_macro_f1": 0.795,
+  "test_plain": {
+   "macro_f1": 0.65,
+   "accuracy": 0.652,
+   "auc": 0.879,
+   "persons_macro_f1": 0.68
+  },
+  "test_same": {
+   "macro_f1": 0.529,
+   "accuracy": 0.625,
+   "auc": 0.739,
+   "persons_macro_f1": 0.544
+  },
+  "test_dialect": {
+   "macro_f1": 0.688,
+   "accuracy": 0.784,
+   "auc": 0.974,
+   "persons_macro_f1": 0.688
+  },
+  "bench": {
+   "macro_f1": 0.671,
+   "accuracy": 0.667,
+   "auc": 0.913,
+   "persons_macro_f1": 0.671
+  },
+  "seconds": 63
+ },
+ {
+  "curve": "clips",
+  "value": 3,
+  "seed": 0,
+  "clips": 37164,
+  "persons": 17797,
+  "epochs": 27,
+  "dev_macro_f1": 0.748,
+  "test_plain": {
+   "macro_f1": 0.6,
+   "accuracy": 0.607,
+   "auc": 0.794,
+   "persons_macro_f1": 0.623
+  },
+  "test_same": {
+   "macro_f1": 0.488,
+   "accuracy": 0.603,
+   "auc": 0.586,
+   "persons_macro_f1": 0.511
+  },
+  "test_dialect": {
+   "macro_f1": 0.67,
+   "accuracy": 0.763,
+   "auc": 0.967,
+   "persons_macro_f1": 0.672
+  },
+  "bench": {
+   "macro_f1": 0.616,
+   "accuracy": 0.622,
+   "auc": 0.832,
+   "persons_macro_f1": 0.616
+  },
+  "seconds": 65
+ },
+ {
+  "curve": "clips",
+  "value": 3,
+  "seed": 1,
+  "clips": 37164,
+  "persons": 17797,
+  "epochs": 22,
+  "dev_macro_f1": 0.76,
+  "test_plain": {
+   "macro_f1": 0.605,
+   "accuracy": 0.612,
+   "auc": 0.808,
+   "persons_macro_f1": 0.631
+  },
+  "test_same": {
+   "macro_f1": 0.517,
+   "accuracy": 0.631,
+   "auc": 0.706,
+   "persons_macro_f1": 0.528
+  },
+  "test_dialect": {
+   "macro_f1": 0.641,
+   "accuracy": 0.756,
+   "auc": 0.918,
+   "persons_macro_f1": 0.639
+  },
+  "bench": {
+   "macro_f1": 0.637,
+   "accuracy": 0.633,
+   "auc": 0.89,
+   "persons_macro_f1": 0.637
+  },
+  "seconds": 42
+ },
+ {
+  "curve": "clips",
+  "value": 6,
+  "seed": 0,
+  "clips": 46299,
+  "persons": 17797,
+  "epochs": 38,
+  "dev_macro_f1": 0.782,
+  "test_plain": {
+   "macro_f1": 0.604,
+   "accuracy": 0.611,
+   "auc": 0.791,
+   "persons_macro_f1": 0.63
+  },
+  "test_same": {
+   "macro_f1": 0.524,
+   "accuracy": 0.626,
+   "auc": 0.683,
+   "persons_macro_f1": 0.551
+  },
+  "test_dialect": {
+   "macro_f1": 0.671,
+   "accuracy": 0.758,
+   "auc": 0.926,
+   "persons_macro_f1": 0.667
+  },
+  "bench": {
+   "macro_f1": 0.647,
+   "accuracy": 0.644,
+   "auc": 0.896,
+   "persons_macro_f1": 0.647
+  },
+  "seconds": 135
+ },
+ {
+  "curve": "clips",
+  "value": 6,
+  "seed": 1,
+  "clips": 46299,
+  "persons": 17797,
+  "epochs": 33,
+  "dev_macro_f1": 0.79,
+  "test_plain": {
+   "macro_f1": 0.623,
+   "accuracy": 0.629,
+   "auc": 0.839,
+   "persons_macro_f1": 0.652
+  },
+  "test_same": {
+   "macro_f1": 0.54,
+   "accuracy": 0.642,
+   "auc": 0.682,
+   "persons_macro_f1": 0.568
+  },
+  "test_dialect": {
+   "macro_f1": 0.669,
+   "accuracy": 0.771,
+   "auc": 0.896,
+   "persons_macro_f1": 0.671
+  },
+  "bench": {
+   "macro_f1": 0.611,
+   "accuracy": 0.611,
+   "auc": 0.825,
+   "persons_macro_f1": 0.611
+  },
+  "seconds": 85
+ }
+]
