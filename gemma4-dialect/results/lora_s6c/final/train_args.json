@@ -1,0 +1,8 @@
+{
+  "combined_from": [
+    "runs/lora_r64c/final",
+    "runs/lora_s6/final"
+  ],
+  "r": 144,
+  "lora_alpha": 144
+}

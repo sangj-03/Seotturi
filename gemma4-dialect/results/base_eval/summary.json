@@ -1,0 +1,42 @@
+{
+  "adapter": null,
+  "overall": {
+    "n": 1199,
+    "cer_dialect": 0.4553,
+    "cer_standard": 0.5337,
+    "format_ok": 0.9908
+  },
+  "dialect_utterances": {
+    "n": 960,
+    "cer_dialect": 0.4069,
+    "cer_standard": 0.502,
+    "format_ok": 0.9927
+  },
+  "regions": {
+    "강원": {
+      "n": 299,
+      "cer_dialect": 0.4259,
+      "cer_standard": 0.5145,
+      "format_ok": 0.9933
+    },
+    "경상": {
+      "n": 300,
+      "cer_dialect": 0.2425,
+      "cer_standard": 0.3641,
+      "format_ok": 0.99
+    },
+    "제주": {
+      "n": 300,
+      "cer_dialect": 0.8596,
+      "cer_standard": 0.8732,
+      "format_ok": 0.9833
+    },
+    "충청": {
+      "n": 300,
+      "cer_dialect": 0.2929,
+      "cer_standard": 0.383,
+      "format_ok": 0.9967
+    }
+  },
+  "seconds": 1169
+}

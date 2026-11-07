@@ -1,0 +1,21 @@
+{
+  "train": "data_r64/train.jsonl",
+  "valid": "data_all/valid.jsonl",
+  "format": "basic",
+  "out": "runs/lora_r64",
+  "epochs": 1.0,
+  "max_steps": 3000,
+  "batch_size": 2,
+  "grad_accum": 8,
+  "lr": 2e-05,
+  "lora_r": 64,
+  "lora_alpha": 128,
+  "train_audio_projection": true,
+  "eval_per_region": 40,
+  "save_steps": 500,
+  "eval_steps": 250,
+  "workers": 4,
+  "resume": true,
+  "init_adapter": null,
+  "merge_adapter": "runs/lora_v1/final"
+}

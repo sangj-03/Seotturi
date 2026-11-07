@@ -1,0 +1,24 @@
+{
+  "adapter": "runs/lora_gangwon/final",
+  "overall": {
+    "n": 299,
+    "cer_dialect": 0.208,
+    "cer_standard": 0.2021,
+    "format_ok": 0.9967
+  },
+  "dialect_utterances": {
+    "n": 240,
+    "cer_dialect": 0.2073,
+    "cer_standard": 0.1995,
+    "format_ok": 0.9958
+  },
+  "regions": {
+    "강원": {
+      "n": 299,
+      "cer_dialect": 0.208,
+      "cer_standard": 0.2021,
+      "format_ok": 0.9967
+    }
+  },
+  "seconds": 328
+}

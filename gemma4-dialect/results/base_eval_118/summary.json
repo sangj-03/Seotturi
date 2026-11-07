@@ -1,0 +1,24 @@
+{
+  "adapter": null,
+  "overall": {
+    "n": 299,
+    "cer_dialect": 0.4257,
+    "cer_standard": 0.5141,
+    "format_ok": 0.9933
+  },
+  "dialect_utterances": {
+    "n": 240,
+    "cer_dialect": 0.3067,
+    "cer_standard": 0.394,
+    "format_ok": 1.0
+  },
+  "regions": {
+    "강원": {
+      "n": 299,
+      "cer_dialect": 0.4257,
+      "cer_standard": 0.5141,
+      "format_ok": 0.9933
+    }
+  },
+  "seconds": 275
+}

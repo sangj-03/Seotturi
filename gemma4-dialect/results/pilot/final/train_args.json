@@ -1,0 +1,18 @@
+{
+  "train": "pilot_data/train.jsonl",
+  "valid": "none.jsonl",
+  "out": "runs/pilot",
+  "epochs": 1.0,
+  "max_steps": 100,
+  "batch_size": 4,
+  "grad_accum": 4,
+  "lr": 0.0001,
+  "lora_r": 16,
+  "lora_alpha": 32,
+  "train_audio_projection": true,
+  "eval_per_region": 40,
+  "save_steps": 100000,
+  "eval_steps": 500,
+  "workers": 4,
+  "resume": false
+}
