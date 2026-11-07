@@ -79,7 +79,7 @@ flowchart LR
 3. **Accent**: the frozen Whisper-large-v3 encoder pools all 33 hidden states over the speech frames. A four-region head (강원, 충청, 경상, 제주) gives P(region | regional), and a separate detector gives P(서울·경기). The app averages the clips of an answer by length and counts the accent in the dialect ratio when the answer sounds regional.
 4. **Scores**: the dialect ratio is the share of words the model changed plus words carried by a regional accent; the standard score is 100 minus that ratio. Fluency (speech rate, phonation ratio, mean length of run, fillers) is measured from the audio; for presentations, script coverage is the sentence-level maximum of BERTScore recall and character-bigram recall. Interview score = standard score + answer score (out of 200, pass at 140). The rules are written out in [docs/seotturi_judgment_logic.pdf](docs/seotturi_judgment_logic.pdf) (Korean).
 5. **Coaching**: the same Gemma 4 with the adapter switched off reads the standard-Korean sentences, the dialect ratio and the zone (never the audio) and writes the feedback; rubric scores are taken as expected values over the score tokens (G-Eval).
-6. **Conversation partners**: 5 interviewers, 3 audiences and a cast per everyday situation speak their lines with Supertonic 3 on the CPU. Their scenes were drawn with Qwen-Image-Edit-2511 from the app's own characters ([img-gen/](img-gen/)), and the characters blink and move their mouths while they talk.
+6. **Conversation partners**: 5 interviewers, 3 audiences and a cast per everyday situation speak their lines with Supertonic 3 on the CPU. Their scenes were drawn with Qwen-Image-Edit-2511 from the app's own characters ([tools/img-gen/](tools/img-gen/)), and the characters blink and move their mouths while they talk.
 7. **Model updates**: the engine scores each new checkpoint on a fixed benchmark (160 dialect + 105 plain utterances) and swaps adapters in about 1.5 s without a restart, only when a paired bootstrap says the candidate is better with probability ≥ 0.95. Results are shown on the site's `/benchmark` page.
 
 ## Training stages
@@ -96,57 +96,58 @@ Every stage started from the adapter that was served at the time. A stage was ke
 | 6 | `lora_s6` → `lora_s6c` | 64,000 new | rank-64 LoRA on top of r64c, folded into one rank-144 adapter | test 0.145 / 0.151 → **0.140 / 0.147**, served since 2026-10-11 |
 | 7 | `lora_s7` | 308,363 | rank-128 LoRA on top of s6c | prepared, stopped before the first step |
 
-CER is given as dialect line / standard line. One step is 16 utterances (2 × 8 accumulation, the fastest split on the GB10), about 11–13 s and 31–34 GB of peak memory. Details, the error analysis and the intonation test are in [gemma4-dialect/README.md](gemma4-dialect/README.md); the accent classifier's runs are in [accent-id/README.md](accent-id/README.md).
+CER is given as dialect line / standard line. One step is 16 utterances (2 × 8 accumulation, the fastest split on the GB10), about 11–13 s and 31–34 GB of peak memory. Details, the error analysis and the intonation test are in [training/gemma4-dialect/README.md](training/gemma4-dialect/README.md); the accent classifier's runs are in [training/accent-id/README.md](training/accent-id/README.md).
 
 ## Repository layout
 
 ```text
-seotturi/
-├── gemma4-dialect/           # Gemma 4 12B dialect speech LoRA
-│   ├── common.py             #   prompt, audio loading, batching, answer parsing, CER (the web engine imports it)
-│   ├── prepare_data.py       #   AI Hub sampling and clip cutting → manifests
-│   ├── prepare_origin.py     #   speaker accent zones from birthplace and residence (stage 3)
-│   ├── train.py              #   LoRA training: resume, --init-adapter, --merge-adapter
-│   ├── evaluate.py           #   scoring, --guard = the site's decoding
-│   ├── score_eval.py         #   corpus CER, jamo CER, recording-block bootstrap, probability of being better
-│   ├── combine_adapters.py   #   folds stacked LoRAs into one adapter for serving
-│   ├── error_analysis.py     #   CER by cause, region, clip length and label check
-│   ├── prepare_intonation.py, score_intonation.py   # intonation test set and its scoring
-│   ├── run_stage*.sh         #   stages 1–7 (keep_stage*.sh starts a stage again after a crash)
-│   ├── run_eval_*.sh         #   validation, test and clip-padding evaluations
-│   ├── *_jeolla.py           #   Jeolla alignment pilot (not used: Whisper alignment took about 16 h per source file)
-│   └── results/              #   reports and training settings copied from runs/
-├── accent-id/                # accent-zone classifier on the frozen Whisper-large-v3 encoder
-│   ├── common.py             #   zones, encoder features, heads, Classifier and Tree (the accent service imports it)
-│   ├── prepare.py, features.py, train_head.py   # splits, pooled features, phase 1 head
-│   ├── finetune.py, finetune3.py                # phases 2 and 3: LoRA on the upper encoder layers
-│   ├── region4.py, augment.py, conditions.py    # four regions, recording-condition copies, condition tests
-│   ├── calibrate_std.py, session_eval.py        # standard-accent detector bias, answer-level evaluation
-│   └── results/              #   metrics of every run, condition tests, answer-level report
-├── seotturi-web/             # the service
-│   ├── run.sh                #   start / stop / restart the four servers
-│   ├── server/               #   engine.py, accent.py, tts.py, app.py, analysis.py, pron.py
-│   ├── web/                  #   landing page, app (phone layout), /benchmark, /record test page
-│   └── scripts/              #   benchmark set and metrics, word book, static copy, character frames
-├── img-gen/                  # conversation-partner scenes (Qwen-Image-Edit-2511)
-├── docs/                     # scoring logic (PDF + HTML source), survey on one model for dialect and accent
-└── requirements.txt
+Seotturi/
+├── app/                          # the web service
+│   ├── run.sh                    #   start / stop / restart the servers (start-web: without the GPU, 체험 모드)
+│   ├── server/                   #   app.py (web + API), engine.py (Gemma 4), accent.py, tts.py, analysis.py, pron.py,
+│   │                             #   demo.py (answers while the engine is off), engine_files.py
+│   ├── web/                      #   landing page, app (phone layout), /benchmark, /record test page
+│   ├── scripts/                  #   benchmark set and metrics, word book, static copy, character frames
+│   └── requirements-tts.txt      #   the speech service's own environment
+├── training/
+│   ├── gemma4-dialect/           # Gemma 4 12B dialect speech LoRA
+│   │   ├── common.py             #   prompt, audio loading, batching, answer parsing, CER (the engine imports it)
+│   │   ├── prepare_data.py       #   AI Hub sampling and clip cutting → manifests
+│   │   ├── prepare_origin.py     #   speaker accent zones from birthplace and residence (stage 3)
+│   │   ├── train.py              #   LoRA training: resume, --init-adapter, --merge-adapter
+│   │   ├── evaluate.py           #   scoring, --guard = the site's decoding
+│   │   ├── score_eval.py         #   corpus CER, jamo CER, recording-block bootstrap, probability of being better
+│   │   ├── combine_adapters.py   #   folds stacked LoRAs into one adapter for serving
+│   │   ├── error_analysis.py     #   CER by cause, region, clip length and label check
+│   │   ├── run_stage*.sh         #   stages 1–7 (keep_stage*.sh starts a stage again after a crash)
+│   │   ├── run_eval_*.sh         #   validation, test and clip-padding evaluations
+│   │   └── results/              #   reports and training settings copied from runs/
+│   └── accent-id/                # accent-zone classifier on the frozen Whisper-large-v3 encoder
+│       ├── common.py             #   zones, encoder features, heads, Classifier and Tree (the accent service imports it)
+│       ├── prepare.py, features.py, train_head.py   # splits, pooled features, phase 1 head
+│       ├── finetune.py, finetune3.py                # phases 2 and 3: LoRA on the upper encoder layers
+│       ├── region4.py, augment.py, conditions.py    # four regions, recording-condition copies, condition tests
+│       └── results/              #   metrics of every run, condition tests, answer-level report
+├── tools/
+│   └── img-gen/                  # conversation-partner scenes (Qwen-Image-Edit-2511)
+├── docs/                         # scoring logic (PDF + HTML source), survey on one model for dialect and accent
+└── requirements.txt              # the main environment (.venv at the repository root)
 ```
 
 ## How to run
 
 ### 0. Environment and paths
 
-Tested on an NVIDIA DGX Spark (GB10, aarch64, 128 GB unified memory) with Python 3.13 and CUDA. The scripts keep the absolute paths of that machine: the repository at `/data/seotturi`, AI Hub downloads under `/data/aihub/<dataset id>/`, the Hugging Face cache at `/data/huggingface`, and the virtual environment at `/data/seotturi/.venv`. Clone to the same place, or link those paths.
+Tested on an NVIDIA DGX Spark (GB10, aarch64, 128 GB unified memory) with Python 3.13 and CUDA. Paths inside the repository are relative to it, and the scripts use the virtual environment `.venv` at its root (`PY=...` overrides it). Two places outside it are fixed defaults of the machine it ran on: AI Hub downloads under `/data/aihub/<dataset id>/` and the Hugging Face cache at `/data/huggingface`.
 
 ```bash
-git clone https://github.com/sangj-03/Seotturi.git /data/seotturi
-cd /data/seotturi
+git clone https://github.com/sangj-03/Seotturi.git
+cd Seotturi
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt   # install the CUDA build of torch first
-python3 -m venv seotturi-web/.venv-tts && seotturi-web/.venv-tts/bin/pip install -r seotturi-web/requirements-tts.txt
+python3 -m venv app/.venv-tts && app/.venv-tts/bin/pip install -r app/requirements-tts.txt
 ```
 
-Models (Hugging Face): `google/gemma-4-12B-it` (the snapshot path is `MODEL_PATH` in `gemma4-dialect/common.py`), `openai/whisper-large-v3`, `Supertone/supertonic-3` (into `/data/seotturi/models/supertonic3`), and for the site's extra checks `slplab/wav2vec2-xls-r-300m_phone-mfa_korean` and `klue/roberta-base`.
+Models (Hugging Face): `google/gemma-4-12B-it` (the snapshot path is `MODEL_PATH` in `training/gemma4-dialect/common.py`), `openai/whisper-large-v3`, `Supertone/supertonic-3` (into `models/supertonic3` at the repository root), and for the site's extra checks `slplab/wav2vec2-xls-r-300m_phone-mfa_korean` and `klue/roberta-base`.
 
 ### 1. Data
 
@@ -155,7 +156,7 @@ Apply on [AI Hub](https://aihub.or.kr) for 한국어 방언 발화 (강원도 11
 ### 2. Train and evaluate the Gemma 4 adapter
 
 ```bash
-cd /data/seotturi/gemma4-dialect && mkdir -p runs
+cd training/gemma4-dialect && mkdir -p runs
 setsid nohup ./run_stage1_gangwon.sh > runs/stage1.log 2>&1 < /dev/null &   # Gangwon, about 5 h
 setsid nohup ./run_stage2_all.sh > runs/stage2.log 2>&1 < /dev/null &       # waits for stage 1, then all four regions, about 15 h
 ```
@@ -165,22 +166,25 @@ Each step is skipped when its output exists, and training resumes from the newes
 ### 3. Train the accent classifier
 
 ```bash
-cd /data/seotturi/accent-id
-PY=/data/seotturi/.venv/bin/python; export HF_HOME=/data/huggingface HF_HUB_OFFLINE=1
+cd training/accent-id
+PY=../../.venv/bin/python; export HF_HOME=/data/huggingface HF_HUB_OFFLINE=1
 $PY prepare.py index && $PY prepare.py split                         # the clips cut in step 2, split by recording
 $PY features.py train dev test_plain test_same test_dialect bench    # pooled encoder features (~1 h)
 $PY train_head.py --out runs/phase1                                  # phase 1 head and its test scores
 ```
 
-The served pair builds on these features: the four-region head `runs/region4` (`region4.py`, `features.py r4_aug r4_dev_aug`, `run_region4.sh`) and the standard-accent detector `runs/detector_mix`. The service reads them through two links, `runs/served` and `runs/served_std`. The order of every run is in [accent-id/README.md](accent-id/README.md).
+The served pair builds on these features: the four-region head `runs/region4` (`region4.py`, `features.py r4_aug r4_dev_aug`, `run_region4.sh`) and the standard-accent detector `runs/detector_mix`. The service reads them through two links, `runs/served` and `runs/served_std`. The order of every run is in [training/accent-id/README.md](training/accent-id/README.md).
 
 ### 4. Start the service
 
 ```bash
-cd /data/seotturi/seotturi-web
-./run.sh start     # Gemma engine (about 5 min to load), TTS, accent service, web server
-./run.sh status    # served adapter, its benchmark score, next update check
+cd app
+./run.sh start       # Gemma engine (about 5 min to load), TTS, accent service, web server
+./run.sh start-web   # or: web server and voices only, no GPU (체험 모드)
+./run.sh status      # served adapter, its benchmark score, next update check
 ```
+
+**Without the Gemma engine (체험 모드).** `./run.sh start-web` runs only the web server and the speech service, on the CPU. The whole site still works: speech is answered with example sentences, the coach's feedback, the conversation partner and review sentences are examples, each labelled 체험 모드 in the app, while recording, measured fluency, scores, accounts, the word book, the community and the voices are real. The landing page and `/benchmark` show the last served adapter, its scores and the update history from the engine's files ([app/README.md](app/README.md)).
 
 Open http://localhost:8787 (landing page with the app in a phone frame) or http://localhost:8787/app. Browsers allow the microphone only on `localhost` or HTTPS. The engine serves the adapters listed in `SEOTTURI_WATCH` (default `lora_r64c:basic,lora_s6c:basic`). On a machine whose memory is shared with training jobs, start the servers from cron rather than from a desktop terminal: under memory pressure, systemd-oomd stops a terminal's whole scope.
 
@@ -189,26 +193,26 @@ Open http://localhost:8787 (landing page with the app in a phone frame) or http:
 The `results/` folders are copies of the report files in `runs/`:
 
 ```bash
-cat gemma4-dialect/results/eval_test_guard/report_s6c.txt        # served adapter on the 4,000-utterance test set
-cat gemma4-dialect/results/eval_test_guard/s6c/error_analysis.md # where its errors are (Korean)
-cat accent-id/results/session_eval/report.md                     # accent system on whole answers (Korean)
+cat training/gemma4-dialect/results/eval_test_guard/report_s6c.txt        # served adapter on the 4,000-utterance test set
+cat training/gemma4-dialect/results/eval_test_guard/s6c/error_analysis.md # where its errors are (Korean)
+cat training/accent-id/results/session_eval/report.md                     # accent system on whole answers (Korean)
 ```
 
 ## What is not included
 
-- **AI Hub data**: audio, cut clips, manifests and model predictions, which AI Hub's terms do not allow to redistribute. The word book (`seotturi-web/scripts/build_dict.py`) is built from them and from 우리말샘 (fetched with your own API key by `fetch_opendict.py`), so it is not included either.
+- **AI Hub data**: audio, cut clips, manifests and model predictions, which AI Hub's terms do not allow to redistribute. The word book (`app/scripts/build_dict.py`) is built from them and from 우리말샘 (fetched with your own API key by `fetch_opendict.py`), so it is not included either.
 - **Trained weights**: LoRA adapters, classifier heads and cached encoder features.
-- **Service state**: the app database, recordings from the `/record` test page, logs, and the static copy built by `scripts/build_static.py`.
-- **Downloaded models**: Gemma 4 12B, Whisper-large-v3, Supertonic 3, Qwen-Image-Edit-2511 and the YuNet face detector used by `img-gen/faces.py`.
+- **Service state**: the app database, recordings from the `/record` test page, logs, and the static copy built by `app/scripts/build_static.py`.
+- **Downloaded models**: Gemma 4 12B, Whisper-large-v3, Supertonic 3, Qwen-Image-Edit-2511 and the YuNet face detector used by `tools/img-gen/faces.py`.
 
 ## Known limitations
 
 - Jeju stays far behind the other regions (CER about 0.30 against 0.07–0.16). The error analysis shows that a single-digit CER needs better recognition of ordinary words, above all in short clips, not more dialect vocabulary.
 - Jeolla is covered by neither model.
-- The accent label is the AI Hub set a clip was recorded in, and each set has its own recording setup: the background alone still names the region at 0.50 balanced recall (chance 0.25), and 23–26% of Seoul-Gyeonggi speakers are called regional at the answer level. Thresholds should be set on real browser recordings (`/record`, `accent-id/eval_browser.py`), which are not collected yet.
+- The accent label is the AI Hub set a clip was recorded in, and each set has its own recording setup: the background alone still names the region at 0.50 balanced recall (chance 0.25), and 23–26% of Seoul-Gyeonggi speakers are called regional at the answer level. Thresholds should be set on real browser recordings (`/record`, `training/accent-id/eval_browser.py`), which are not collected yet.
 - AI Hub numbers speakers only inside a recording, so splits are by recording and the same person can appear in training and test under different numbers; a voice-similarity check found that test accuracy does not depend on such matches.
 - The 1,199-utterance validation set also chose checkpoints, and the independent test set decided between adapters more than once.
-- Paths are absolute (see How to run), and the service assumes one GPU shared by the engine, the accent service and training.
+- AI Hub and the Hugging Face cache are read from fixed places (see How to run), and the service assumes one GPU shared by the engine, the accent service and training.
 
 ## References
 

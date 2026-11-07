@@ -8,11 +8,12 @@ features/
 *.wav
 *.flac
 *.mp3
-!seotturi-web/web/assets/silent.mp3
+!app/web/assets/silent.mp3
 *.jsonl
 
-# Training outputs, adapters, classifier heads, cached features
+# Training outputs, adapters, classifier heads, cached features, downloaded models
 runs/
+/models/
 *.pt
 *.pth
 *.bin
@@ -21,18 +22,17 @@ runs/
 *.npy
 *.onnx
 
-# Service state: app database, user recordings, adapter snapshots, logs
-seotturi-web/data/
-seotturi-web/state/
-seotturi-web/logs/
-seotturi-web/static_site/
+# Service state: app database, user recordings, adapter snapshots, logs, the built static copy
+app/state/
+app/logs/
+app/static_site/
 logs/
 *.log
 
 # Image generation: vendored diffusers, downloaded models, drawings
-img-gen/pylib/
-img-gen/models/
-img-gen/out/
+tools/img-gen/pylib/
+tools/img-gen/models/
+tools/img-gen/out/
 
 # Python / editor
 __pycache__/

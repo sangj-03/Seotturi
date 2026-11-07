@@ -79,7 +79,7 @@ flowchart LR
 3. **억양**: 고정한 Whisper-large-v3 인코더의 은닉 상태 33개를 말소리 구간에서 평균 냅니다. 4지역 헤드(강원·충청·경상·제주)는 P(지역 | 지역 억양)을, 따로 둔 판별기는 P(서울·경기)를 냅니다. 앱은 한 답변의 클립을 길이로 가중 평균하고, 답변이 지역 억양으로 들리면 그 억양을 사투리 비율에 반영합니다.
 4. **점수**: 사투리 비율은 모델이 바꾼 어절과 지역 억양이 실린 어절의 비율이고, 표준어 점수는 100에서 그 비율을 뺀 값입니다. 유창성(말 속도, 발성 비율, 평균 발화 길이, 군말)은 녹음에서 직접 재고, 발표에서는 대본 일치도를 문장별 BERTScore 재현율과 글자 바이그램 재현율 중 큰 값으로 계산합니다. 면접 점수 = 표준어 점수 + 답변 점수(200점 만점, 140점 합격)입니다. 전체 규칙은 [docs/seotturi_judgment_logic.pdf](docs/seotturi_judgment_logic.pdf)에 정리했습니다.
 5. **코칭**: 같은 Gemma 4를 어댑터를 끈 채로 써서, 표준어 문장·사투리 비율·지역(음성은 주지 않음)을 읽고 피드백을 씁니다. 기준표 점수는 점수 토큰 확률의 기댓값(G-Eval)으로 매깁니다.
-6. **대화 상대**: 면접관 5명, 청중 3종, 일상 상황별 등장인물이 Supertonic 3(CPU)로 대사를 말합니다. 장면 그림은 앱의 캐릭터 이미지를 바탕으로 Qwen-Image-Edit-2511로 그렸고([img-gen/](img-gen/)), 캐릭터는 눈을 깜빡이고 말할 때 입을 움직입니다.
+6. **대화 상대**: 면접관 5명, 청중 3종, 일상 상황별 등장인물이 Supertonic 3(CPU)로 대사를 말합니다. 장면 그림은 앱의 캐릭터 이미지를 바탕으로 Qwen-Image-Edit-2511로 그렸고([tools/img-gen/](tools/img-gen/)), 캐릭터는 눈을 깜빡이고 말할 때 입을 움직입니다.
 7. **모델 업데이트**: 엔진은 새 체크포인트를 고정 벤치마크(사투리 160문장 + 일반 105문장)로 채점하고, 짝지은 부트스트랩에서 더 나을 확률이 0.95 이상일 때만 재시작 없이 약 1.5초 만에 어댑터를 바꿉니다. 결과는 사이트의 `/benchmark` 페이지에 나옵니다.
 
 ## 학습 단계
@@ -96,57 +96,58 @@ flowchart LR
 | 6 | `lora_s6` → `lora_s6c` | 새 발화 64,000 | r64c 위에 rank-64 LoRA, rank-144 어댑터 하나로 합침 | 시험 0.145 / 0.151 → **0.140 / 0.147**, 2026-10-11부터 서비스 |
 | 7 | `lora_s7` | 308,363 | s6c 위에 rank-128 LoRA | 준비 후 첫 스텝 전에 중지 |
 
-CER은 방언 줄 / 표준어 줄입니다. 한 스텝은 16발화(2 × 누적 8, GB10에서 가장 빠른 조합)로 약 11~13초, 최대 메모리 31~34GB였습니다. 자세한 내용과 오류 분석, 억양(의문문) 시험은 [gemma4-dialect/README.md](gemma4-dialect/README.md)에, 억양 분류기 실험은 [accent-id/README.md](accent-id/README.md)에 있습니다(영어).
+CER은 방언 줄 / 표준어 줄입니다. 한 스텝은 16발화(2 × 누적 8, GB10에서 가장 빠른 조합)로 약 11~13초, 최대 메모리 31~34GB였습니다. 자세한 내용과 오류 분석, 억양(의문문) 시험은 [training/gemma4-dialect/README.md](training/gemma4-dialect/README.md)에, 억양 분류기 실험은 [training/accent-id/README.md](training/accent-id/README.md)에 있습니다(영어).
 
 ## 저장소 구조
 
 ```text
-seotturi/
-├── gemma4-dialect/           # Gemma 4 12B 방언 음성 LoRA
-│   ├── common.py             #   프롬프트, 오디오 읽기, 배치, 답 해석, CER (웹 엔진도 가져다 씀)
-│   ├── prepare_data.py       #   AI Hub 표본 추출과 발화 자르기 → 목록 파일
-│   ├── prepare_origin.py     #   출생지·거주지로 화자 억양 권역 붙이기 (3단계)
-│   ├── train.py              #   LoRA 학습: 이어 하기, --init-adapter, --merge-adapter
-│   ├── evaluate.py           #   채점, --guard = 사이트 디코딩
-│   ├── score_eval.py         #   코퍼스 CER, 자모 CER, 녹음 단위 부트스트랩, 더 나을 확률
-│   ├── combine_adapters.py   #   겹쳐 학습한 LoRA를 서비스용 어댑터 하나로 합침
-│   ├── error_analysis.py     #   원인·지역·클립 길이·라벨 확인별 CER
-│   ├── prepare_intonation.py, score_intonation.py   # 억양(의문문) 시험 세트와 채점
-│   ├── run_stage*.sh         #   1~7단계 (keep_stage*.sh는 죽으면 다시 시작)
-│   ├── run_eval_*.sh         #   검증·시험·클립 여유 실험 평가
-│   ├── *_jeolla.py           #   전라 정렬 파일럿 (쓰지 않음: Whisper 정렬이 원본 파일 하나에 약 16시간)
-│   └── results/              #   runs/에서 옮긴 보고서와 학습 설정
-├── accent-id/                # 고정 Whisper-large-v3 인코더 위 억양 권역 분류기
-│   ├── common.py             #   권역, 인코더 특징, 헤드, Classifier·Tree (억양 서비스가 가져다 씀)
-│   ├── prepare.py, features.py, train_head.py   # 분할, 풀링 특징, 1단계 헤드
-│   ├── finetune.py, finetune3.py                # 2·3단계: 인코더 위쪽 층 LoRA
-│   ├── region4.py, augment.py, conditions.py    # 4지역, 녹음 환경 복사본, 조건별 시험
-│   ├── calibrate_std.py, session_eval.py        # 표준 억양 판별 보정, 답변 단위 평가
-│   └── results/              #   모든 실험의 지표, 조건별 시험, 답변 단위 보고서
-├── seotturi-web/             # 서비스
-│   ├── run.sh                #   서버 4개 시작·중지·재시작
-│   ├── server/               #   engine.py, accent.py, tts.py, app.py, analysis.py, pron.py
-│   ├── web/                  #   소개 페이지, 앱(휴대폰 화면), /benchmark, /record 녹음 시험 페이지
-│   └── scripts/              #   벤치마크 세트와 지표, 단어 도감, 정적 사본, 캐릭터 프레임
-├── img-gen/                  # 대화 상대 장면 그림 (Qwen-Image-Edit-2511)
-├── docs/                     # 판정 로직(PDF + HTML 원본), 방언·억양 통합 모델 논문 조사
-└── requirements.txt
+Seotturi/
+├── app/                          # 웹 서비스
+│   ├── run.sh                    #   서버 시작·중지·재시작 (start-web: GPU 없이 체험 모드)
+│   ├── server/                   #   app.py(웹 + API), engine.py(Gemma 4), accent.py, tts.py, analysis.py, pron.py,
+│   │                             #   demo.py(엔진이 꺼졌을 때의 답), engine_files.py
+│   ├── web/                      #   소개 페이지, 앱(휴대폰 화면), /benchmark, /record 녹음 시험 페이지
+│   ├── scripts/                  #   벤치마크 세트와 지표, 단어 도감, 정적 사본, 캐릭터 프레임
+│   └── requirements-tts.txt      #   음성 서비스 전용 환경
+├── training/
+│   ├── gemma4-dialect/           # Gemma 4 12B 방언 음성 LoRA
+│   │   ├── common.py             #   프롬프트, 오디오 읽기, 배치, 답 해석, CER (엔진도 가져다 씀)
+│   │   ├── prepare_data.py       #   AI Hub 표본 추출과 발화 자르기 → 목록 파일
+│   │   ├── prepare_origin.py     #   출생지·거주지로 화자 억양 권역 붙이기 (3단계)
+│   │   ├── train.py              #   LoRA 학습: 이어 하기, --init-adapter, --merge-adapter
+│   │   ├── evaluate.py           #   채점, --guard = 사이트 디코딩
+│   │   ├── score_eval.py         #   코퍼스 CER, 자모 CER, 녹음 단위 부트스트랩, 더 나을 확률
+│   │   ├── combine_adapters.py   #   겹쳐 학습한 LoRA를 서비스용 어댑터 하나로 합침
+│   │   ├── error_analysis.py     #   원인·지역·클립 길이·라벨 확인별 CER
+│   │   ├── run_stage*.sh         #   1~7단계 (keep_stage*.sh는 죽으면 다시 시작)
+│   │   ├── run_eval_*.sh         #   검증·시험·클립 여유 실험 평가
+│   │   └── results/              #   runs/에서 옮긴 보고서와 학습 설정
+│   └── accent-id/                # 고정 Whisper-large-v3 인코더 위 억양 권역 분류기
+│       ├── common.py             #   권역, 인코더 특징, 헤드, Classifier·Tree (억양 서비스가 가져다 씀)
+│       ├── prepare.py, features.py, train_head.py   # 분할, 풀링 특징, 1단계 헤드
+│       ├── finetune.py, finetune3.py                # 2·3단계: 인코더 위쪽 층 LoRA
+│       ├── region4.py, augment.py, conditions.py    # 4지역, 녹음 환경 복사본, 조건별 시험
+│       └── results/              #   모든 실험의 지표, 조건별 시험, 답변 단위 보고서
+├── tools/
+│   └── img-gen/                  # 대화 상대 장면 그림 (Qwen-Image-Edit-2511)
+├── docs/                         # 판정 로직(PDF + HTML 원본), 방언·억양 통합 모델 논문 조사
+└── requirements.txt              # 기본 환경 (저장소 맨 위의 .venv)
 ```
 
 ## 실행 방법
 
 ### 0. 환경과 경로
 
-NVIDIA DGX Spark(GB10, aarch64, 통합 메모리 128GB), Python 3.13, CUDA에서 확인했습니다. 스크립트는 그 장비의 절대 경로를 그대로 씁니다. 저장소는 `/data/seotturi`, AI Hub 원본은 `/data/aihub/<데이터셋 번호>/`, Hugging Face 캐시는 `/data/huggingface`, 가상환경은 `/data/seotturi/.venv`입니다. 같은 위치에 받거나 이 경로들을 링크로 만들어 주세요.
+NVIDIA DGX Spark(GB10, aarch64, 통합 메모리 128GB), Python 3.13, CUDA에서 확인했습니다. 저장소 안의 경로는 모두 저장소 기준이고, 스크립트는 저장소 맨 위의 가상환경 `.venv`를 씁니다(`PY=...`로 바꿀 수 있음). 저장소 밖의 두 곳만 그 장비의 기본값입니다. AI Hub 원본은 `/data/aihub/<데이터셋 번호>/`, Hugging Face 캐시는 `/data/huggingface`입니다.
 
 ```bash
-git clone https://github.com/sangj-03/Seotturi.git /data/seotturi
-cd /data/seotturi
+git clone https://github.com/sangj-03/Seotturi.git
+cd Seotturi
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt   # torch는 CUDA 판을 먼저 설치
-python3 -m venv seotturi-web/.venv-tts && seotturi-web/.venv-tts/bin/pip install -r seotturi-web/requirements-tts.txt
+python3 -m venv app/.venv-tts && app/.venv-tts/bin/pip install -r app/requirements-tts.txt
 ```
 
-필요한 모델(Hugging Face): `google/gemma-4-12B-it`(스냅샷 경로는 `gemma4-dialect/common.py`의 `MODEL_PATH`), `openai/whisper-large-v3`, `Supertone/supertonic-3`(`/data/seotturi/models/supertonic3`에), 사이트의 추가 검사용 `slplab/wav2vec2-xls-r-300m_phone-mfa_korean`, `klue/roberta-base`.
+필요한 모델(Hugging Face): `google/gemma-4-12B-it`(스냅샷 경로는 `training/gemma4-dialect/common.py`의 `MODEL_PATH`), `openai/whisper-large-v3`, `Supertone/supertonic-3`(저장소 맨 위 `models/supertonic3`에), 사이트의 추가 검사용 `slplab/wav2vec2-xls-r-300m_phone-mfa_korean`, `klue/roberta-base`.
 
 ### 1. 데이터
 
@@ -155,7 +156,7 @@ python3 -m venv seotturi-web/.venv-tts && seotturi-web/.venv-tts/bin/pip install
 ### 2. Gemma 4 어댑터 학습·평가
 
 ```bash
-cd /data/seotturi/gemma4-dialect && mkdir -p runs
+cd training/gemma4-dialect && mkdir -p runs
 setsid nohup ./run_stage1_gangwon.sh > runs/stage1.log 2>&1 < /dev/null &   # 강원, 약 5시간
 setsid nohup ./run_stage2_all.sh > runs/stage2.log 2>&1 < /dev/null &       # 1단계를 기다렸다가 4개 지역, 약 15시간
 ```
@@ -165,22 +166,25 @@ setsid nohup ./run_stage2_all.sh > runs/stage2.log 2>&1 < /dev/null &       # 1�
 ### 3. 억양 분류기 학습
 
 ```bash
-cd /data/seotturi/accent-id
-PY=/data/seotturi/.venv/bin/python; export HF_HOME=/data/huggingface HF_HUB_OFFLINE=1
+cd training/accent-id
+PY=../../.venv/bin/python; export HF_HOME=/data/huggingface HF_HUB_OFFLINE=1
 $PY prepare.py index && $PY prepare.py split                         # 2단계에서 자른 클립, 녹음 단위 분할
 $PY features.py train dev test_plain test_same test_dialect bench    # 인코더 풀링 특징 (약 1시간)
 $PY train_head.py --out runs/phase1                                  # 1단계 헤드와 시험 점수
 ```
 
-서비스 중인 두 모델은 이 특징 위에 만듭니다. 4지역 헤드 `runs/region4`(`region4.py`, `features.py r4_aug r4_dev_aug`, `run_region4.sh`)와 표준 억양 판별기 `runs/detector_mix`이고, 서비스는 `runs/served`, `runs/served_std` 링크로 읽습니다. 모든 실험의 순서는 [accent-id/README.md](accent-id/README.md)에 있습니다.
+서비스 중인 두 모델은 이 특징 위에 만듭니다. 4지역 헤드 `runs/region4`(`region4.py`, `features.py r4_aug r4_dev_aug`, `run_region4.sh`)와 표준 억양 판별기 `runs/detector_mix`이고, 서비스는 `runs/served`, `runs/served_std` 링크로 읽습니다. 모든 실험의 순서는 [training/accent-id/README.md](training/accent-id/README.md)에 있습니다.
 
 ### 4. 서비스 실행
 
 ```bash
-cd /data/seotturi/seotturi-web
-./run.sh start     # Gemma 엔진(불러오는 데 약 5분), TTS, 억양 서비스, 웹 서버
-./run.sh status    # 서비스 중인 어댑터, 벤치마크 점수, 다음 업데이트 확인 시각
+cd app
+./run.sh start       # Gemma 엔진(불러오는 데 약 5분), TTS, 억양 서비스, 웹 서버
+./run.sh start-web   # 또는: 웹 서버와 음성 서비스만, GPU 없이 (체험 모드)
+./run.sh status      # 서비스 중인 어댑터, 벤치마크 점수, 다음 업데이트 확인 시각
 ```
+
+**Gemma 엔진 없이 (체험 모드).** `./run.sh start-web`은 웹 서버와 음성 서비스만 CPU로 띄웁니다. 그래도 사이트 전체가 동작합니다. 음성은 예시 문장으로, 코치 피드백·대화 상대·복습 문장은 예시로 답하고 앱에 모두 '체험 모드'라고 표시합니다. 녹음, 녹음에서 잰 유창성, 점수, 계정, 단어 도감, 커뮤니티, 목소리는 실제로 동작합니다. 소개 페이지와 `/benchmark`는 엔진이 남긴 파일에서 마지막 서비스 어댑터, 점수, 업데이트 기록을 읽어 보여 줍니다([app/README.md](app/README.md)).
 
 http://localhost:8787 (휴대폰 틀 안에 앱이 있는 소개 페이지) 또는 http://localhost:8787/app 으로 접속합니다. 브라우저는 `localhost`나 HTTPS에서만 마이크를 허용합니다. 엔진은 `SEOTTURI_WATCH`에 적힌 어댑터를 씁니다(기본값 `lora_r64c:basic,lora_s6c:basic`). 학습과 메모리를 함께 쓰는 장비라면 데스크톱 터미널 대신 cron에서 서버를 켜세요. 메모리가 부족해지면 systemd-oomd가 터미널 범위(scope)를 통째로 종료합니다.
 
@@ -189,26 +193,26 @@ http://localhost:8787 (휴대폰 틀 안에 앱이 있는 소개 페이지) 또�
 `results/` 폴더는 `runs/`의 보고서 파일을 옮겨 둔 것입니다.
 
 ```bash
-cat gemma4-dialect/results/eval_test_guard/report_s6c.txt        # 서비스 어댑터, 시험 세트 4,000문장
-cat gemma4-dialect/results/eval_test_guard/s6c/error_analysis.md # 오류가 어디서 나오는지
-cat accent-id/results/session_eval/report.md                     # 답변 단위 억양 판정
+cat training/gemma4-dialect/results/eval_test_guard/report_s6c.txt        # 서비스 어댑터, 시험 세트 4,000문장
+cat training/gemma4-dialect/results/eval_test_guard/s6c/error_analysis.md # 오류가 어디서 나오는지
+cat training/accent-id/results/session_eval/report.md                     # 답변 단위 억양 판정
 ```
 
 ## 포함하지 않은 것
 
-- **AI Hub 데이터**: 음성, 잘라 낸 클립, 목록 파일, 모델 예측 결과. AI Hub 이용 약관상 재배포할 수 없습니다. 단어 도감(`seotturi-web/scripts/build_dict.py`)도 이 데이터와 우리말샘(`fetch_opendict.py`, 본인 API 키 필요)으로 만들기 때문에 넣지 않았습니다.
+- **AI Hub 데이터**: 음성, 잘라 낸 클립, 목록 파일, 모델 예측 결과. AI Hub 이용 약관상 재배포할 수 없습니다. 단어 도감(`app/scripts/build_dict.py`)도 이 데이터와 우리말샘(`fetch_opendict.py`, 본인 API 키 필요)으로 만들기 때문에 넣지 않았습니다.
 - **학습한 가중치**: LoRA 어댑터, 분류 헤드, 인코더 특징 캐시.
-- **서비스 상태**: 앱 데이터베이스, `/record` 녹음 시험 페이지의 녹음, 로그, `scripts/build_static.py`로 만든 정적 사본.
-- **내려받는 모델**: Gemma 4 12B, Whisper-large-v3, Supertonic 3, Qwen-Image-Edit-2511, `img-gen/faces.py`가 쓰는 YuNet 얼굴 검출기.
+- **서비스 상태**: 앱 데이터베이스, `/record` 녹음 시험 페이지의 녹음, 로그, `app/scripts/build_static.py`로 만든 정적 사본.
+- **내려받는 모델**: Gemma 4 12B, Whisper-large-v3, Supertonic 3, Qwen-Image-Edit-2511, `tools/img-gen/faces.py`가 쓰는 YuNet 얼굴 검출기.
 
 ## 알려진 한계
 
 - 제주는 다른 지역보다 크게 뒤처집니다(CER 약 0.30, 다른 지역 0.07~0.16). 오류 분석을 보면 CER 한 자리를 위해서는 사투리 어휘보다 일반 단어 인식, 특히 짧은 클립의 인식을 높여야 합니다.
 - 전라는 두 모델 모두 다루지 않습니다.
-- 억양 정답은 클립이 녹음된 AI Hub 세트이고, 세트마다 녹음 환경이 다릅니다. 배경만 들려줘도 균형 재현율 0.50(우연 0.25)으로 지역을 맞히고, 답변 단위에서 서울·경기 화자의 23~26%를 지역 억양으로 판정합니다. 기준값은 실제 브라우저 녹음(`/record`, `accent-id/eval_browser.py`)으로 정해야 하는데, 아직 모으지 못했습니다.
+- 억양 정답은 클립이 녹음된 AI Hub 세트이고, 세트마다 녹음 환경이 다릅니다. 배경만 들려줘도 균형 재현율 0.50(우연 0.25)으로 지역을 맞히고, 답변 단위에서 서울·경기 화자의 23~26%를 지역 억양으로 판정합니다. 기준값은 실제 브라우저 녹음(`/record`, `training/accent-id/eval_browser.py`)으로 정해야 하는데, 아직 모으지 못했습니다.
 - AI Hub는 녹음 안에서만 화자 번호를 매기므로 녹음 단위로 나눴고, 같은 사람이 다른 번호로 학습과 시험에 함께 있을 수 있습니다. 목소리 유사도로 확인한 결과 시험 정확도는 이런 겹침에 좌우되지 않았습니다.
 - 검증 세트 1,199문장은 체크포인트 선택에도 썼고, 독립 시험 세트도 어댑터 결정에 여러 번 썼습니다.
-- 경로가 절대 경로이고(실행 방법 참고), 서비스는 엔진·억양 서비스·학습이 GPU 하나를 함께 쓴다고 가정합니다.
+- AI Hub와 Hugging Face 캐시는 정해진 위치에서 읽고(실행 방법 참고), 서비스는 엔진·억양 서비스·학습이 GPU 하나를 함께 쓴다고 가정합니다.
 
 ## 참고
 
