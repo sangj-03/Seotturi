@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b6bff">
+  <meta name="robots" content="noindex">
+  <title>서투리 억양 녹음</title>
+  <link rel="icon" href="/assets/icon.png">
+  <link rel="preload" href="/fonts/PretendardVariable.woff2" as="font" type="font/woff2" crossorigin>
+  <style>
+    @font-face { font-family: Pretendard; src: url(/fonts/PretendardVariable.woff2) format("woff2"); font-weight: 100 900; }
+    :root { --blue: #0a6bff; --blue-l: #e8f1ff; --ink: #111a2e; --muted: #5b6b85; --line: #e6ebf2; --bg: #f6f9fd;
+            --card: #fff; --red: #ef3b3b; --green: #12b76a; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 Pretendard, system-ui, sans-serif; }
+    main { max-width: 640px; margin: 0 auto; padding: 24px 16px 64px; }
+    h1 { font-size: 22px; margin: 8px 0 4px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 20px; margin: 16px 0; }
+    .muted { color: var(--muted); font-size: 14px; }
+    label { display: block; margin: 12px 0 4px; font-weight: 600; font-size: 14px; }
+    select, input[type=text], input[type=number] { width: 100%; padding: 10px 12px; border: 1px solid var(--line);
+            border-radius: 10px; font: inherit; background: #fff; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+    .check { display: flex; gap: 8px; align-items: flex-start; font-weight: 400; margin-top: 16px; }
+    button { font: inherit; font-weight: 600; border: 0; border-radius: 12px; padding: 12px 18px; cursor: pointer; }
+    .primary { background: var(--blue); color: #fff; }
+    .ghost { background: var(--blue-l); color: var(--blue); }
+    .rec { background: var(--red); color: #fff; min-width: 140px; }
+    button:disabled { opacity: .45; cursor: default; }
+    .bar { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+    .sentence { font-size: 22px; font-weight: 700; line-height: 1.5; margin: 12px 0; word-break: keep-all; }
+    .progress { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+    .progress > i { display: block; height: 100%; background: var(--blue); width: 0; transition: width .2s; }
+    .level { height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; margin-top: 12px; }
+    .level > i { display: block; height: 100%; background: var(--green); width: 0; }
+    .err { color: var(--red); font-size: 14px; min-height: 1.4em; margin-top: 8px; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>서투리 억양 녹음</h1>
+  <p class="muted">억양 판별 모델을 실제 사이트 녹음으로 시험하기 위한 녹음이에요. 사이트 연습 화면과 똑같은 방식으로 녹음돼요.
+    문장 20개를 읽고, 짧게 두 번 자유롭게 말하면 끝나요. 약 10분 걸려요.</p>
+
+  <section class="card" id="intro">
+    <label for="name">이름 또는 별명 (선택)</label>
+    <input type="text" id="name" maxlength="40">
+    <div class="row">
+      <div><label for="raised">자란 곳</label><select id="raised"></select></div>
+      <div><label for="current">지금 사는 곳</label><select id="current"></select></div>
+      <div><label for="birthplace">태어난 곳</label><select id="birthplace"></select></div>
+      <div><label for="years">자란 곳에서 산 기간 (년)</label><input type="number" id="years" min="0" max="99"></div>
+      <div><label for="age">나이대</label>
+        <select id="age"><option value="">선택</option><option>10대</option><option>20대</option><option>30대</option>
+          <option>40대</option><option>50대</option><option>60대 이상</option></select></div>
+      <div><label for="sex">성별</label>
+        <select id="sex"><option value="">선택</option><option>여성</option><option>남성</option><option>밝히지 않음</option></select></div>
+    </div>
+    <label for="self">평소 내 말투</label>
+    <select id="self"><option value="">선택</option><option>표준어에 가까움</option><option>약간 사투리</option><option>사투리가 강함</option></select>
+    <label class="check"><input type="checkbox" id="consent">
+      <span>녹음과 위 정보가 서투리 억양 모델을 시험하고 개선하는 데에만 쓰이고, 외부에 공개되지 않는다는 데 동의해요.</span></label>
+    <p class="muted">평소 말투 그대로 읽어 주세요. 일부러 사투리를 쓰거나 숨기지 않아도 돼요. 조용한 곳에서, 평소 쓰는 기기와 브라우저로 녹음해 주세요.</p>
+    <div class="err" id="introErr"></div>
+    <div class="bar"><button class="primary" id="begin">시작하기</button></div>
+  </section>
+
+  <section class="card" id="take" hidden>
+    <div class="progress"><i id="prog"></i></div>
+    <p class="muted" id="step"></p>
+    <div class="sentence" id="text"></div>
+    <div class="level"><i id="lvl"></i></div>
+    <div class="bar">
+      <button class="rec" id="rec">녹음 시작</button>
+      <button class="ghost" id="play" disabled>들어보기</button>
+      <button class="primary" id="next" disabled>저장하고 다음</button>
+    </div>
+    <div class="err" id="takeErr"></div>
+  </section>
+
+  <section class="card" id="done" hidden>
+    <h1>고마워요!</h1>
+    <p>녹음이 모두 저장됐어요. 이 창은 닫아도 돼요.</p>
+  </section>
+
+  <section class="card" id="nokey" hidden>
+    <p>녹음 링크가 올바르지 않아요. 받은 링크를 그대로 열어 주세요.</p>
+  </section>
+</main>
+<script type="module" src="/js/record.js?v=1"></script>
+</body>
+</html>

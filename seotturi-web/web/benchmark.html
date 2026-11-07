@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b6bff">
+  <title>서투리 학습 벤치마크</title>
+  <meta name="description" content="학습 중인 서투리 Gemma 4 모델을 2시간마다 같은 시험 문장으로 채점한 결과(문자 오류율, sWER, chrF++, 정규화 오류감소율, 억양 지역 판별 Macro-F1)와 앱의 억양 판정을 맡는 Whisper 억양 분류기의 실험 결과.">
+  <link rel="icon" href="/assets/icon.png">
+  <link rel="preload" href="/fonts/PretendardVariable.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/css/landing.css">
+  <link rel="stylesheet" href="/css/benchmark.css">
+</head>
+<body class="bm-page">
+  <header class="nav solid" id="nav">
+    <div class="container">
+      <a class="mini" href="/"><img src="/assets/icon.png" alt=""><img class="wm" src="/assets/logo-white.png" alt="서투리"></a>
+      <nav>
+        <a href="/#model">AI 모델</a>
+        <a href="#versions">모델 버전</a>
+        <a href="#accent">억양 분류기</a>
+        <a href="#defs">지표 설명</a>
+        <a class="btn white small" href="/app">앱 열기</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="bm-hero">
+    <div class="container">
+      <span class="tag">Benchmark</span>
+      <h1>서투리 AI 학습 벤치마크</h1>
+      <p>지금도 학습 중인 Gemma 4 서투리 모델을 <b id="hours">5</b>시간마다 같은 시험 문장으로 채점합니다. 시험 문장은 학습에 한 번도 쓰지 않은 AI Hub 검증 데이터에서 골랐고, 지표는 한국어 음성인식·방언 정규화·방언 식별 연구에서 쓰는 방식을 그대로 따랐습니다. 앱의 억양 판정을 맡는 <a href="#accent" style="color:#fff;text-decoration:underline;text-underline-offset:3px">Whisper 억양 분류기</a>의 실험 결과도 함께 정리했습니다.</p>
+      <div class="chips" id="meta"><span><i class="run"></i>결과를 불러오는 중…</span></div>
+    </div>
+  </section>
+
+  <main class="container bm">
+    <h2 id="kpi-title">지금 서비스 중인 모델</h2>
+    <div class="kpis" id="kpis"></div>
+    <p class="kpi-note" id="kpi-note"></p>
+
+    <h2 id="versions">모델 버전과 학습 방식</h2>
+    <div class="bm-card">
+      <p class="sub" style="margin:0">모든 버전은 Gemma 4 12B에 LoRA 어댑터를 더해 학습한 것이고, 버전마다 바꾼 것은 <b>어디서 출발했는지, 어떤 데이터를 더 넣었는지, 답의 형식, 어댑터 크기(rank)</b>입니다. v2r와 v3는 v1과 같은 크기의 어댑터에 데이터만 더 넣었는데 v1을 넘지 못했고, 학습 손실이 검증 손실과 같은 수준(0.28~0.30)에 머물러 어댑터 용량이 한계로 보였습니다. 그래서 r64c부터는 앞 버전의 어댑터를 모델 가중치에 합친 뒤 그 위에 4배 큰 새 어댑터(rank 64)를 학습했고, 이 방식으로 두 번 연속 나아졌습니다.</p>
+      <div class="lineage" id="lineage">
+        <div class="lin-row">
+          <span class="lin-node" data-run="base">Gemma 4 <small>학습 전</small></span><span class="lin-arrow">→</span>
+          <span class="lin-node" data-run="lora_v1">v1 <small>rank 16</small></span><span class="lin-arrow">합치고 새 어댑터 →</span>
+          <span class="lin-node" data-run="lora_r64c">r64c <small>+ rank 64</small></span><span class="lin-arrow">합치고 새 어댑터 →</span>
+          <span class="lin-node" data-run="lora_s6c">s6c <small>+ rank 64</small></span>
+        </div>
+        <div class="lin-row lin-branch"><span>v1에서 같은 어댑터로 이어 학습:</span>
+          <span class="lin-node off" data-run="lora_v2r">v2r <small>억양 지역 줄 추가 · 중단</small></span>
+          <span class="lin-node off" data-run="lora_v3">v3 <small>약한 지역 위주 · 중단</small></span>
+        </div>
+      </div>
+      <p class="sub versions-hint">표를 옆으로 밀면 v2r·v3·r64c·s6c도 볼 수 있어요 →</p>
+      <div class="table-wrap" style="margin-top:16px"><table class="bm-table versions-table" id="versions-table"></table></div>
+      <p class="sub">rank는 어댑터 크기(새로 학습하는 숫자의 양)입니다. "합치고 새 어댑터"는 앞 버전의 어댑터를 Gemma 4 가중치에 더해 넣고, 그 위에 빈 어댑터를 새로 학습하는 방식입니다. 서비스할 때는 둘을 다시 어댑터 하나로 합쳐(r64c는 rank 80, s6c는 rank 144), 코칭 문장을 쓸 때 어댑터를 끈 원래 Gemma 4를 그대로 쓸 수 있게 합니다. 한 스텝은 16발화이고, 학습률(lr)은 한 번에 가중치를 얼마나 크게 바꾸는지입니다. 표의 CER은 아래 "전체 결과"와 같은 160문장 기준이며, 중단된 버전은 측정한 체크포인트들의 범위입니다. "4,000문장 시험"은 버전끼리 비교하려고 따로 만든 시험셋(권역당 1,000문장, 사이트와 같은 방식으로 디코딩)입니다.</p>
+    </div>
+
+    <div class="bm-grid">
+      <div class="bm-card">
+        <h3>학습 곡선 · 문자 오류율(CER)</h3>
+        <p class="sub">시험 문장 160개 · 낮을수록 좋아요 · 세로선은 95% 신뢰구간</p>
+        <div class="legend"><span><i class="line" style="background:var(--s1)"></i>방언 받아쓰기</span><span><i class="line" style="background:var(--s2)"></i>표준어 변환</span></div>
+        <div class="chart" id="curve"></div>
+      </div>
+      <div class="bm-card">
+        <h3>억양 지역 판별 · Macro-F1</h3>
+        <p class="sub">사투리 단어가 없는 문장 105개(7개 권역 × 15) · 높을수록 좋아요</p>
+        <div class="chart" id="zone"></div>
+      </div>
+    </div>
+
+    <div class="bm-grid">
+      <div class="bm-card">
+        <h3>권역별 문자 오류율</h3>
+        <p class="sub" id="region-sub"></p>
+        <div class="legend"><span><i class="rect" style="background:var(--s1)"></i>방언 받아쓰기</span><span><i class="rect" style="background:var(--s2)"></i>표준어 변환</span></div>
+        <div class="chart" id="regions"></div>
+      </div>
+      <div class="bm-card">
+        <h3>억양 지역 혼동 행렬</h3>
+        <p class="sub" id="cm-sub"></p>
+        <div class="cm" id="cm"></div>
+      </div>
+    </div>
+
+    <h2>전체 결과</h2>
+    <div class="bm-card">
+      <p class="sub" style="margin:0">모든 측정 결과를 표로 보여 줍니다. 괄호 안은 95% 신뢰구간입니다.</p>
+      <div class="table-wrap"><table class="bm-table" id="table"></table></div>
+    </div>
+
+    <h2 id="accent">억양 분류기 · Whisper</h2>
+    <div class="bm-card acc-intro">
+      <p class="sub" style="margin:0">앱에서 억양 지역을 판정하고 표준어가 아닌 억양을 사투리 비율에 반영하는 일은 Gemma가 아니라 따로 학습한 <b>Whisper 억양 분류기</b>가 합니다. 모든 실험은 학습에 쓰지 않은 AI Hub 검증 데이터로 채점했습니다. <span id="acc-intro-now"></span></p>
+      <div class="chips light" id="acc-meta"></div>
+    </div>
+
+    <div class="bm-card" style="margin-top:18px">
+      <h3>억양 분류기 버전과 학습 방식</h3>
+      <p class="sub">모든 버전은 Whisper-large-v3 인코더 위에 작은 판정 층을 얹은 것이고, 버전마다 바꾼 것은 <b>인코더를 고정했는지 미세조정했는지, 학습 데이터의 양, 여러 모델을 섞었는지, 무엇을 맞히게 했는지</b>입니다. 10/7~10/9에는 6개 권역(서울·경기 = 표준) 중 하나를 고르는 분류기를 데이터를 1.7배로 늘리고 미세조정 모델과 섞어 개선했습니다. 10/9에 말소리 없이 배경만 들려줘도 지역을 맞히는 것, 즉 억양이 아니라 녹음 환경을 배운 것을 발견했습니다. 그래서 지금은 녹음 환경을 바꾼 복사본으로 학습한 <b>4지역 모델</b>과, 지역 억양이 있는지만 보는 <b>표준 억양 판별기</b>를 따로 씁니다.</p>
+      <div class="lineage" id="acc-lineage">
+        <div class="lin-row"><span class="lin-label">10/7~10/9 · 6개 권역</span>
+          <span class="lin-node" data-run="phase1">1단계 <small>고정 인코더</small></span><span class="lin-arrow">+ 미세조정 모델과 섞기 →</span>
+          <span class="lin-node" data-run="ensemble">1+2단계 앙상블</span><span class="lin-arrow">데이터 1.7배 →</span>
+          <span class="lin-node" data-run="ensemble_big">1.7배 앙상블</span>
+        </div>
+        <div class="lin-row"><span class="lin-label">10/9~ · 지금</span>
+          <span class="lin-node" data-run="region4">4지역 모델 <small>녹음 환경 변형</small></span><span class="lin-arrow">+</span>
+          <span class="lin-node" data-run="detector_mix">표준 억양 판별기 <small>1.7배 앙상블 ½ + 6권역 변형 ½</small></span>
+        </div>
+        <div class="lin-row lin-branch"><span>시험만 하고 쓰지 않음:</span>
+          <span class="lin-node off">1단계 3.6배 <small>거의 안 오름</small></span>
+          <span class="lin-node off">3단계 <small>LP-FT · 시험 낮음</small></span>
+          <span class="lin-node off">3개 앙상블 <small>서울·경기 오판 그대로</small></span>
+          <span class="lin-node off">두 칸 판별기 <small>표준/지역 · AUC <span id="acc-std2-auc">0.735</span></small></span>
+        </div>
+      </div>
+      <p class="sub versions-hint">표를 옆으로 밀면 다른 버전도 볼 수 있어요 →</p>
+      <div class="table-wrap" style="margin-top:16px"><table class="bm-table versions-table" id="acc-versions-table"></table></div>
+      <p class="sub">"고정 인코더"는 Whisper를 그대로 두고 33개 층 출력의 평균·표준편차만 뽑아 작은 판정 층을 학습하는 방식, "미세조정"은 인코더 위쪽 층(17~32층)에 LoRA를 붙여 함께 학습하는 방식입니다. 앙상블은 여러 모델이 낸 확률을 비율대로 섞은 것이고, 보정은 서울·경기(표준) 쪽 확률을 올려 표준어 화자를 지역 억양으로 잘못 판정하는 일을 줄이는 값입니다. 6개 권역 수치는 사투리 단어 없는 문장 1,200개(권역당 200), 4지역과 판별기 수치는 아래 "지금 서비스 중인 억양 판정"과 같은 시험 기준입니다.</p>
+    </div>
+
+    <div id="acc-now" hidden>
+      <div class="kpis" id="acc-now-kpis" style="margin-top:18px"></div>
+      <p class="kpi-note" id="acc-now-note"></p>
+      <div class="bm-card" style="margin-top:18px" id="acc-sessions-card" hidden>
+        <h3>답변 단위로 보면 · 문장 수에 따른 4지역 Macro-F1</h3>
+        <p class="sub" id="acc-sessions-sub"></p>
+        <div class="legend"><span><i class="line" style="background:var(--s1)"></i>원본 녹음</span><span><i class="line" style="background:var(--s2)"></i>사이트 전처리 후</span></div>
+        <div class="chart" id="acc-sessions"></div>
+        <div class="table-wrap"><table class="bm-table" id="acc-sessions-table"></table></div>
+        <p class="sub" id="acc-sessions-note"></p>
+      </div>
+      <div class="bm-card" style="margin-top:18px">
+        <h3>사이트 녹음 조건별 지역 맞힘</h3>
+        <p class="sub">사투리 단어 없는 문장 985개(강원·충청·경상·제주) · 지역마다 맞힌 비율의 평균 · 무작위 25% · 같은 클립을 사이트가 실제로 겪는 방식으로 바꿔서 채점</p>
+        <div class="table-wrap"><table class="bm-table" id="acc-now-region"></table></div>
+      </div>
+      <div class="bm-card" style="margin-top:18px">
+        <h3>사이트 녹음 조건별 표준어·지역 억양 구분</h3>
+        <p class="sub">위 985개 + 서울·경기 화자 200개 · AUC는 0.5 무작위, 1 완벽 · 이전 = 10/9까지 서비스한 6권역 앙상블, 두 칸 = 표준·지역 이진 판별기(미채택), 6권역 변형 = 녹음 환경 변형 학습 모델 · 잡아냄 = 지역 화자를 지역 억양으로 판정한 비율, 서울 오판 = 서울·경기 화자를 지역 억양으로 판정한 비율(실제 판정 기준)</p>
+        <div class="table-wrap"><table class="bm-table" id="acc-now-detector"></table></div>
+      </div>
+      <div class="bm-card" style="margin-top:18px">
+        <h3>4지역 · 표준 억양 판별기 실험 전체</h3>
+        <p class="sub">새 실험은 결과 파일이 생기면 10분 안에 자동으로 추가돼요 · 4지역은 지역마다 맞힌 비율의 평균(무작위 25%), 판별기는 표준어·지역 억양 구분 AUC(무작위 0.5) · 조건은 위 표와 같아요</p>
+        <div class="table-wrap"><table class="bm-table" id="acc-runs4"></table></div>
+        <div class="table-wrap" style="margin-top:14px"><table class="bm-table" id="acc-detectors"></table></div>
+      </div>
+      <div class="bm-card" style="margin-top:18px">
+        <h3>바뀐 점</h3>
+        <ul class="acc-notes" id="acc-now-notes"></ul>
+      </div>
+      <h2 style="margin-top:36px;font-size:20px">6개 권역 실험 기록 <span class="muted" style="font-size:14px;font-weight:500" id="acc-history-when"></span></h2>
+      <p class="sub">서울·경기를 포함한 6개 권역(서울·경기, 강원, 충청, 대구·경북, 부산·울산·경남, 제주)을 문장 하나만 듣고 고르는 과제 · 무작위 Macro-F1 약 17% · 지금 판별기의 절반이 이 기록의 모델들이에요</p>
+    </div>
+    <div class="kpis" id="acc-kpis" style="margin-top:18px"></div>
+    <p class="kpi-note" id="acc-note"></p>
+
+    <div class="bm-grid">
+      <div class="bm-card">
+        <h3>실험별 Macro-F1</h3>
+        <p class="sub" id="acc-bars-sub"></p>
+        <div class="seg" id="acc-test" role="tablist" aria-label="시험 세트"></div>
+        <div class="legend"><span><i class="rect" style="background:var(--s3)"></i><span class="acc-served-label">서비스 중</span></span><span><i class="rect" style="background:#a9bbd3"></i>다른 실험</span><span><i class="dot"></i>검증(dev) 점수</span></div>
+        <div class="chart" id="acc-bars"></div>
+      </div>
+      <div class="bm-card">
+        <h3>학습 데이터 양과 성능</h3>
+        <p class="sub">1단계 분류기를 학습 데이터 양만 바꿔 다시 학습 · 가로축은 학습 클립 수(로그 눈금) · 검증(dev)은 학습과 같은 Training 분할이라 높게 나와요</p>
+        <div class="legend"><span><i class="line dash" style="color:var(--s1)"></i>검증(dev)</span><span><i class="line" style="background:var(--s3)"></i>사투리 단어 없는 문장</span><span><i class="line" style="background:var(--s2)"></i>같은 문장, 다른 권역</span></div>
+        <div class="chart" id="acc-curve"></div>
+      </div>
+    </div>
+
+    <div class="bm-grid">
+      <div class="bm-card">
+        <h3>억양 혼동 행렬</h3>
+        <p class="sub" id="acc-cm-sub"></p>
+        <div class="cm" id="acc-cm"></div>
+      </div>
+      <div class="bm-card">
+        <h3>같은 문장으로 본 Gemma와 비교</h3>
+        <p class="sub" id="acc-gemma-sub"></p>
+        <div class="legend"><span><i class="rect" style="background:#c3cddb"></i>Gemma 4 '지역:' 줄</span><span><i class="rect" style="background:var(--s3)"></i>Whisper 억양 분류기 (<span class="acc-served-label">서비스 중</span>)</span></div>
+        <div class="chart" id="acc-gemma"></div>
+      </div>
+    </div>
+
+    <div class="bm-card" style="margin-top:18px">
+      <h3>전체 실험 결과</h3>
+      <p class="sub">6개 권역 Macro-F1 · 괄호 안은 95% 신뢰구간 · AUC와 오판율은 사투리 단어 없는 문장 기준 · 행을 누르면 혼동 행렬이 바뀌어요</p>
+      <div class="table-wrap"><table class="bm-table" id="acc-table"></table></div>
+    </div>
+
+    <h2 id="defs">지표 정의와 근거</h2>
+    <div class="bm-card defs">
+      <p class="sub" style="margin:0">학습한 모델은 음성을 들은 그대로 받아쓰고(방언), 같은 뜻의 표준어로 바꿉니다. v2r는 말투로 화자의 억양 지역까지 골랐지만, 지금 서비스하는 s6c는 받아쓰기와 변환만 하고 억양은 아래의 억양 분류기가 판정합니다. 각 일을 그 분야 논문에서 쓰는 지표로 따로 잽니다.</p>
+      <dl>
+        <dt>문자 오류율 (CER)</dt>
+        <dd>모델 출력과 정답 사이의 음절 단위 편집 거리(삽입·삭제·치환)를 정답 글자 수로 나눈 값입니다. 띄어쓰기와 문장부호는 빼고, 160문장 전체를 합산해 계산합니다. 한국어는 띄어쓰기가 일정하지 않아 음성인식 평가의 기본 지표로 CER을 씁니다(KsponSpeech, K-Wav2vec 2.0). <b>방언 받아쓰기 CER</b>은 들은 그대로 적은 줄을, <b>표준어 변환 CER</b>은 표준어로 바꾼 줄을 각각 정답과 비교합니다.</dd>
+        <dt>sWER (띄어쓰기 정규화 단어 오류율)</dt>
+        <dd>모델 출력의 띄어쓰기를 정답에 맞춘 뒤 어절 단위로 잰 오류율입니다. 띄어쓰기 차이만으로 단어 오류가 생기지 않게 하는 한국어 음성인식 평가 방식입니다(Bang et al. 2020, Kim et al. 2021). 일반 WER도 표에 함께 적습니다.</dd>
+        <dt>chrF++ (표준어 변환)</dt>
+        <dd>문자 6-gram과 단어 2-gram의 F-score(β=2)입니다. 형태가 풍부한 언어의 번역 품질을 평가할 때 사람 평가와 상관이 높습니다(Popović 2017). 재현할 수 있도록 sacreBLEU 참조 구현으로 계산하고 서명을 함께 남깁니다(Post 2018). 0~100이며 높을수록 좋습니다.</dd>
+        <dt>정규화 오류감소율 (ERR)</dt>
+        <dd>'아무것도 고치지 않고 그대로 두기(leave-as-is)'와 비교해 표준어 변환이 단어 오류를 얼마나 줄였는지 나타냅니다. 원래 정의는 (시스템 정확도 − 그대로 두기 정확도) ÷ (1 − 그대로 두기 정확도)입니다(van der Goot et al. 2021). 방언→표준어 정규화 평가에서도 같은 기준선을 씁니다(Kuparinen et al. 2023, Bollmann 2019). 음성 출력은 단어 정렬이 필요해서 정확도 대신 1−WER을 넣어, (모델 방언 줄을 그대로 쓸 때의 WER − 표준어 줄의 WER) ÷ 앞의 WER로 계산합니다. 0보다 크면 변환이 도움이 된 것이고, 음수면 오히려 해친 것입니다.</dd>
+        <dt>사투리 어휘 교정률</dt>
+        <dd>정답에서 방언이 표준어로 바뀐 부분 중, 모델의 표준어 문장에 올바른 표준어가 들어간 비율입니다. 서투리의 핵심 기능인 사투리 단어 교정을 직접 재는 과제 특화 지표입니다.</dd>
+        <dt>억양 지역 판별 (Macro-F1, 정확도)</dt>
+        <dd>7개 권역(서울·경기, 강원, 충청, 대구·경북, 부산·울산·경남, 전라, 제주)마다 F1을 구해 평균합니다. 방언 식별 공유 과제의 공식 지표입니다(NADI). 악센트 인식 과제처럼 정확도도 함께 봅니다(AESRC 2020). 사투리 단어가 없는 문장만 써서, 단어가 아니라 억양을 듣고 맞히는지 확인합니다. 무작위로 고르면 약 14%입니다.</dd>
+        <dt>억양 분류기 (Whisper)</dt>
+        <dd>앱의 억양 판정은 따로 학습한 분류기가 합니다. Whisper-large-v3 인코더(Radford et al. 2023)의 33개 층 출력을 말소리 구간에서 평균·표준편차로 요약하고, 층마다 배운 가중치로 섞은 뒤 작은 신경망으로 6개 권역 중 하나를 고릅니다(1단계). 2단계와 3단계는 인코더 위쪽 층(17~32층)을 LoRA(Hu et al. 2022)로 미세조정하고, 3단계는 1단계 헤드에서 출발합니다(LP-FT, Kumar et al. 2022). 서비스는 여러 모델의 로그 확률을 가중 평균한 앙상블을 씁니다. 학습에는 AI Hub 한국어 방언 발화(강원·경상·제주·충청) 중 사투리 단어가 없는 문장만 써서, 단어가 아니라 말투를 배우게 했습니다. 화자의 권역은 출생지와 주 거주지가 같은 권역일 때 붙였습니다.</dd>
+        <dt>억양 분류기 시험</dt>
+        <dd>모두 AI Hub 검증(Validation) 분할이고 학습에는 쓰지 않았습니다. <b>사투리 단어 없는 문장</b> 1,200개(6개 권역 × 200), <b>같은 문장, 다른 권역</b> 1,678개(같은 문장을 두 권역 이상의 화자가 말해서 내용으로는 권역을 알 수 없음), <b>사투리 단어 포함</b> 1,086개, 위 Gemma 억양 벤치마크와 같은 90문장(전라 15개 제외)입니다. 지표는 6개 권역 Macro-F1(무작위 약 17%)과 정확도이고, 95% 신뢰구간은 녹음 단위 블록 부트스트랩(1,000번)으로 구합니다. 서울·경기 화자의 문장은 '사투리 단어 포함'에 10개, '같은 문장'에 42개뿐이라 이 두 세트의 표준어 관련 수치는 흔들림이 큽니다.</dd>
+        <dt>표준어 보정</dt>
+        <dd>서울·경기 권역의 로그 확률에 더하는 값입니다. 분류기는 서울·경기 화자를 충청으로 고르는 실수가 많아서, 보정을 올리면 표준어 화자를 지역 억양으로 잘못 보는 일이 줄고 대신 지역 화자를 표준어로 놓치는 일이 늘어납니다. 지금 서비스는 +1.25입니다. 앱은 억양이 표준어가 아닌 문장을 사투리 비율에 넣기 때문에 두 오류율을 함께 보여 줍니다.</dd>
+        <dt>표준어·지역 구분 AUC</dt>
+        <dd>서울·경기와 나머지 권역을 가르는 능력을 임계값과 상관없이 잰 값(ROC 곡선 아래 면적)입니다. 0.5는 무작위, 1은 완벽이며, 표준어 보정을 바꿔도 변하지 않습니다.</dd>
+        <dt>검증(dev)과 시험 점수</dt>
+        <dd>검증 세트는 학습과 같은 Training 분할에서 녹음 단위로 떼어 낸 것으로, 학습을 멈출 시점과 온도 보정을 고르는 데만 씁니다. AI Hub는 화자 번호를 녹음 안에서만 매겨서 같은 사람이 다른 녹음에 다시 나올 수 있고 녹음 환경도 비슷해, 검증 점수는 처음 듣는 사람에 대한 성능보다 높게 나옵니다. 그래서 모델 비교와 채택은 시험 점수로 합니다.</dd>
+        <dt>95% 신뢰구간</dt>
+        <dd>녹음 단위로 묶어 1,000번 다시 뽑는 블록 부트스트랩으로 구합니다(Bisani & Ney 2004). 같은 녹음의 문장끼리는 서로 독립이 아니라서 문장 단위가 아니라 녹음 단위로 뽑습니다(Liu et al. 2020). 구간이 겹치는 두 결과는 차이를 단정하기 어렵습니다.</dd>
+        <dt>RTF (실시간 계수)</dt>
+        <dd>처리 시간을 음성 길이로 나눈 값으로, 1보다 작으면 말하는 속도보다 빠릅니다. 학습과 GPU를 나눠 쓰는 상태에서 잰 값이라 학습이 끝나면 더 빨라집니다.</dd>
+        <dt>시험 문장</dt>
+        <dd>AI Hub 방언 데이터의 검증(Validation) 분할에서 골랐고 학습에는 쓰지 않았습니다. 받아쓰기·변환용 160문장(강원·경상·제주·충청 각 40, 사투리 포함 128 + 표준 32, 녹음 157개)과 억양용 105문장(7개 권역 각 15)이며, 고정 시드로 한 번 정해 모든 모델을 같은 문장으로 비교합니다. 학습 전 Gemma 4와 v1은 학습 프로젝트의 평가 출력(evaluate.py)에서 같은 문장만 골라 채점했습니다.</dd>
+      </dl>
+      <ol class="refs">
+        <li>Bang, J.-U. et al. (2020). KsponSpeech: Korean Spontaneous Speech Corpus for Automatic Speech Recognition. <i>Applied Sciences</i> 10(19). <a href="https://doi.org/10.3390/app10196936" target="_blank" rel="noopener">doi:10.3390/app10196936</a></li>
+        <li>Kim, J., Kang, P. (2021). K-Wav2vec 2.0: Automatic Speech Recognition based on Joint Decoding of Graphemes and Syllables. <a href="https://arxiv.org/abs/2110.05172" target="_blank" rel="noopener">arXiv:2110.05172</a></li>
+        <li>Popović, M. (2017). chrF++: words helping character n-grams. <i>WMT 2017</i>. <a href="https://aclanthology.org/W17-4770/" target="_blank" rel="noopener">W17-4770</a></li>
+        <li>Post, M. (2018). A Call for Clarity in Reporting BLEU Scores. <i>WMT 2018</i>. <a href="https://aclanthology.org/W18-6319/" target="_blank" rel="noopener">W18-6319</a></li>
+        <li>van der Goot, R. et al. (2021). MultiLexNorm: A Shared Task on Multilingual Lexical Normalization. <i>W-NUT 2021</i>. <a href="https://aclanthology.org/2021.wnut-1.55/" target="_blank" rel="noopener">2021.wnut-1.55</a></li>
+        <li>Kuparinen, O., Miletić, A., Scherrer, Y. (2023). Dialect-to-Standard Normalization: A Large-Scale Multilingual Evaluation. <i>Findings of EMNLP 2023</i>. <a href="https://aclanthology.org/2023.findings-emnlp.923/" target="_blank" rel="noopener">2023.findings-emnlp.923</a></li>
+        <li>Bollmann, M. (2019). A Large-Scale Comparison of Historical Text Normalization Systems. <i>NAACL 2019</i>. <a href="https://aclanthology.org/N19-1389/" target="_blank" rel="noopener">N19-1389</a></li>
+        <li>Abdul-Mageed, M. et al. (2023). NADI 2023: The Fourth Nuanced Arabic Dialect Identification Shared Task. <a href="https://arxiv.org/abs/2310.16117" target="_blank" rel="noopener">arXiv:2310.16117</a></li>
+        <li>Shi, X. et al. (2021). The Accented English Speech Recognition Challenge 2020: Open Datasets, Tracks, Baselines, Results and Methods. <i>ICASSP 2021</i>. <a href="https://arxiv.org/abs/2102.10233" target="_blank" rel="noopener">arXiv:2102.10233</a></li>
+        <li>Bisani, M., Ney, H. (2004). Bootstrap Estimates for Confidence Intervals in ASR Performance Evaluation. <i>ICASSP 2004</i>. <a href="https://doi.org/10.1109/ICASSP.2004.1326009" target="_blank" rel="noopener">doi:10.1109/ICASSP.2004.1326009</a></li>
+        <li>Liu, Z., Peng, F. (2020). Statistical Testing on ASR Performance via Blockwise Bootstrap. <i>Interspeech 2020</i>. <a href="https://arxiv.org/abs/1912.09508" target="_blank" rel="noopener">arXiv:1912.09508</a></li>
+        <li>Radford, A. et al. (2023). Robust Speech Recognition via Large-Scale Weak Supervision. <i>ICML 2023</i>. <a href="https://arxiv.org/abs/2212.04356" target="_blank" rel="noopener">arXiv:2212.04356</a></li>
+        <li>Hu, E. J. et al. (2022). LoRA: Low-Rank Adaptation of Large Language Models. <i>ICLR 2022</i>. <a href="https://arxiv.org/abs/2106.09685" target="_blank" rel="noopener">arXiv:2106.09685</a></li>
+        <li>Kumar, A. et al. (2022). Fine-Tuning can Distort Pretrained Features and Underperform Out-of-Distribution. <i>ICLR 2022</i>. <a href="https://arxiv.org/abs/2202.10054" target="_blank" rel="noopener">arXiv:2202.10054</a></li>
+      </ol>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div>
+        <div class="team"><b>TEAM 말버스</b><span>이재석</span><span>이소윤</span><span>이혜린</span><span>전상현</span></div>
+        <p>측정 결과는 학습이 진행되면서 2시간마다 자동으로 갱신됩니다.</p>
+      </div>
+      <a class="btn white" href="/">서투리 홈</a>
+    </div>
+  </footer>
+  <div class="tip" id="tip" hidden></div>
+  <script type="module" src="/js/benchmark.js"></script>
+</body>
+</html>

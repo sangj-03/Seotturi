@@ -1,0 +1,9 @@
+/* Added only to the static copy of the site (GitHub Pages): what the phone frame shows
+   instead of the app while the AI server is off. */
+.phone .app-offline { box-sizing: border-box; width: 390px; height: 844px; border-radius: 50px; background: #f6f9fd;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+  padding: 40px 34px; text-align: center; color: #1b2a44; font-size: 16px; line-height: 1.6; }
+.phone .app-offline img { width: 150px; }
+.phone .app-offline b { font-size: 21px; letter-spacing: -0.02em; }
+.phone .app-offline p { margin: 0; color: #4a5a76; }
+.phone .app-offline a { color: #0b6bff; font-weight: 700; }

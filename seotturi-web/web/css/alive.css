@@ -1,0 +1,77 @@
+/* Idle motion for the characters and the scenery; js/alive.js adds blinking, talking and the hop on
+   tap. Shared by the app and the landing page, loaded after their own CSS. The motions use the
+   individual scale / translate / rotate properties, so they add to the transforms and animations
+   the pages already have instead of replacing them. */
+
+@keyframes alive-breathe { 50% { scale: 1.016 1.03; } }
+@keyframes alive-breathe-scene { 50% { scale: 1.006 1.014; translate: 0 -0.25%; } }
+@keyframes alive-lean { 0%, 100% { rotate: -1.2deg; } 50% { rotate: 1.2deg; } }
+@keyframes alive-sway { 0%, 100% { rotate: -6deg; } 50% { rotate: 6deg; } }
+@keyframes alive-bob { 50% { translate: 0 -6px; } }
+@keyframes alive-hop { 0%, 84%, 100% { translate: 0 0; } 89% { translate: 0 -14%; } 94% { translate: 0 0; } 97% { translate: 0 -4%; } }
+@keyframes alive-peek { from { translate: 0 45%; scale: .8; opacity: 0; } }
+@keyframes alive-wiggle { 25% { rotate: -7deg; scale: 1.07; } 55% { rotate: 5deg; } 80% { rotate: -2deg; } }
+@keyframes alive-say { 0% { scale: .82; } 55% { scale: 1.06; } 100% { scale: 1; } }
+
+/* ---- app ---- */
+.avatar img { transform-origin: 50% 90%; animation: alive-breathe 3.8s ease-in-out infinite; }
+.home .star-float { animation: bob 2.6s ease-in-out infinite, alive-sway 5.4s ease-in-out infinite; }
+.peek img { transform-origin: 50% 100%; animation: alive-peek .7s cubic-bezier(.3, 1.5, .5, 1) both, alive-hop 7s 1.4s ease-in-out infinite; }
+.empty img { animation: alive-bob 3.2s ease-in-out infinite; }
+.mode-card.on img { animation: alive-wiggle .55s ease-out; }
+.result-art { transform-origin: 50% 100%; animation: alive-breathe 3.4s ease-in-out infinite; }
+.session .room, .prep-card .img:not(.silhouette) { transform-origin: 50% 100%; animation: alive-breathe-scene 5.6s ease-in-out infinite; }
+
+/* home: clouds and a few birds drift over the journey map */
+.home .sky { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; container-type: inline-size; }
+.sky .cloud { position: absolute; left: 0; width: 150px; height: 40px; border-radius: 22px; background: #fff; opacity: .93;
+  filter: blur(1px) drop-shadow(0 34px 9px rgba(20, 60, 100, .14)); animation: alive-drift 80s linear infinite; }
+.sky .cloud::before, .sky .cloud::after { content: ""; position: absolute; border-radius: 50%; background: inherit; }
+.sky .cloud::before { width: 68px; height: 60px; left: 22px; top: -30px; }
+.sky .cloud::after { width: 54px; height: 46px; left: 72px; top: -19px; }
+.sky .c1 { top: 22%; animation-delay: -20s; }
+.sky .c2 { top: 41%; scale: .7; opacity: .8; animation-duration: 110s; animation-delay: -75s; }
+.sky .c3 { top: 64%; scale: .85; animation-duration: 95s; animation-delay: -42s; }
+@keyframes alive-drift { from { translate: -240px 0; } to { translate: calc(100cqw + 40px) 0; } }
+.sky .birds { position: absolute; left: 0; top: 30%; animation: alive-fly 30s linear infinite; }
+.sky .birds.b2 { top: 52%; scale: .8; animation-duration: 38s; animation-delay: -21s; }
+.sky .birds i { position: absolute; width: 20px; height: 9px; animation: alive-flap .42s ease-in-out infinite alternate;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 9'%3E%3Cpath d='M1 2.2c3.6 0 6 1.8 9 5.6 3-3.8 5.4-5.6 9-5.6' fill='none' stroke='%232d4560' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat; }
+.sky .birds i:nth-child(2) { left: 26px; top: 12px; width: 16px; height: 7px; animation-delay: -.15s; }
+.sky .birds i:nth-child(3) { left: 8px; top: 24px; width: 14px; height: 6px; animation-delay: -.3s; }
+@keyframes alive-flap { to { scale: 1 -.55; } }
+@keyframes alive-fly { 0% { translate: -60px 0; } 50% { translate: calc(100cqw + 60px) -50px; } 100% { translate: calc(100cqw + 60px) -50px; } }
+@media (min-width: 900px) {
+  body:not(.framed) .home .sky { z-index: 1; } /* over the map, which is the .home::after layer there */
+}
+
+/* result: confetti over the card (js/alive.js confetti()) */
+.confetti { position: absolute; inset: 0; z-index: 2; overflow: hidden; pointer-events: none; }
+.confetti i { position: absolute; top: -14px; width: 8px; height: 13px; border-radius: 2px; animation: alive-confetti 2s cubic-bezier(.25, .6, .45, 1) both; }
+.confetti i:nth-child(3n) { width: 10px; height: 10px; border-radius: 50%; }
+@keyframes alive-confetti { 0% { translate: 0 0; rotate: 0deg; opacity: 1; } 85% { opacity: 1; } 100% { translate: var(--dx) var(--fall); rotate: var(--spin); opacity: 0; } }
+
+/* a character with a waving hand (js/alive.js rigUp): the image shows the body, the hand turns on top */
+.alive-rig { position: relative; display: block; }
+.alive-rig > img:first-child { display: block; }
+.alive-hand { position: absolute; max-width: none; pointer-events: none; animation: alive-wave 4.8s ease-in-out infinite; }
+@keyframes alive-wave { 0%, 58%, 100% { rotate: 0deg; } 9% { rotate: 11deg; } 19% { rotate: -6deg; } 29% { rotate: 11deg; } 39% { rotate: -6deg; } 49% { rotate: 4deg; } }
+
+/* ---- landing page ---- */
+.mascot-wrap .mascot { transform-origin: 50% 100%; animation: alive-breathe 3.6s ease-in-out infinite, alive-lean 7.5s ease-in-out infinite; }
+/* once rigged, body and hand move together and share the shadow landing.css gives .mascot */
+.mascot-wrap .alive-rig { transform-origin: 50% 100%; animation: alive-breathe 3.6s ease-in-out infinite, alive-lean 7.5s ease-in-out infinite;
+  filter: drop-shadow(0 20px 40px rgba(0, 30, 100, .35)); }
+.mascot-wrap .alive-rig .mascot { animation: none; filter: none; }
+.speech.say { animation: alive-say .5s cubic-bezier(.3, 1.6, .5, 1); }
+.hero .star { animation: float 3.4s ease-in-out infinite, alive-sway 6.2s ease-in-out infinite; }
+.hero .cloud { animation: alive-cloud 26s ease-in-out infinite alternate; }
+.hero .cloud:nth-of-type(2) { animation-duration: 33s; animation-delay: -11s; }
+.hero .cloud:nth-of-type(3) { animation-duration: 29s; animation-delay: -17s; }
+@keyframes alive-cloud { to { translate: 70px -14px; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .avatar img, .home .star-float, .peek img, .empty img, .mode-card.on img, .result-art, .session .room, .prep-card .img,
+  .sky, .sky *, .confetti, .mascot-wrap .mascot, .alive-rig, .alive-hand, .speech.say, .hero .star, .hero .cloud { animation: none !important; }
+  .sky { display: none; }
+}
