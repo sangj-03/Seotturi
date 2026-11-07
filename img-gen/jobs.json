@@ -1,0 +1,99 @@
+{
+ "style": "Keep exactly the same soft 3D cartoon render style as the input image: smooth clay-like matte skin, big round glossy brown eyes with white highlights, simple thick eyebrows, small rounded nose, gentle lighting, shallow depth of field. The character faces the camera, centered, upper body, same framing and image quality.",
+ "jobs": [
+  {
+   "id": "barista",
+   "ref": "friend.png",
+   "prompt": "Replace the young man with a friendly Korean female barista in her mid-20s: brown hair tied in a neat ponytail, a warm bright smile, white shirt with a brown canvas apron, standing behind a cafe counter. Change the background to a cozy coffee shop with an espresso machine and a chalk menu board, softly blurred, warm light."
+  },
+  {
+   "id": "rush-staff",
+   "ref": "friend.png",
+   "prompt": "Replace the young man with a busy young Korean male cafe worker in his early 20s: black baseball cap, black apron over a gray T-shirt, a slightly hurried but polite smile, holding an order tablet in one hand. Change the background to a crowded coffee shop counter at lunchtime with a line of customers, softly blurred."
+  },
+  {
+   "id": "cafe-owner",
+   "ref": "friend.png",
+   "prompt": "Replace the young man with a kind, meticulous Korean cafe owner, a woman in her late 40s: short curly permed dark brown hair, round tortoiseshell glasses, an attentive friendly smile, cream shirt with a dark green apron, holding a small notepad and a pen. Change the background to a small warm neighborhood cafe with wooden shelves of coffee beans, softly blurred."
+  },
+  {
+   "id": "student",
+   "ref": "friend.png",
+   "prompt": "Replace the young man with a kind Korean female university student in her early 20s: short black bob hair, a friendly helpful smile, beige trench coat, backpack straps on her shoulders, holding up a smartphone that shows a map. Change the background to a busy city street with a crosswalk and a subway entrance, softly blurred."
+  },
+  {
+   "id": "office-worker",
+   "ref": "friend.png",
+   "prompt": "Replace the young man with a busy Korean office worker in his early 30s: short neat black hair, a slightly hurried expression, navy suit, white shirt without a tie, glancing at the wristwatch on his raised left wrist, holding a takeaway coffee cup in the other hand. Change the background to a morning city sidewalk with office buildings, softly blurred."
+  },
+  {
+   "id": "grandma",
+   "ref": "friend.png",
+   "prompt": "Replace the young man with a kind, gentle Korean grandmother in her 70s: short curly gray permed hair, warm smiling eyes with soft wrinkles, a floral-patterned quilted vest over a lavender cardigan, holding the handle of a small shopping cart. Change the background to a quiet residential alley near a traditional market, softly blurred."
+  },
+  {
+   "id": "peer",
+   "ref": "friend.png",
+   "prompt": "Replace the young man with a friendly Korean office woman in her late 20s: shoulder-length straight dark hair tucked behind one ear, a cheerful smile, light blue shirt, an employee ID card on a lanyard, holding a white coffee mug. Change the background to a bright modern office lounge, softly blurred."
+  },
+  {
+   "id": "team-lead",
+   "ref": "friend.png",
+   "prompt": "Replace the young man with a meticulous but warm Korean team leader in his mid-40s: short neat black hair with a little gray at the temples, an attentive serious face with a faint smile, white shirt with a navy tie, an employee ID card on a lanyard, holding a document folder. Change the background to an open-plan office with desks and monitors, softly blurred."
+  },
+  {
+   "id": "junior",
+   "ref": "friend.png",
+   "prompt": "Replace the young man with an eager new Korean employee in his mid-20s: neat short black hair, wide bright eyes, an enthusiastic smile, light gray suit jacket over a white shirt, a brand-new employee ID card on a lanyard, holding a small notebook and a pen. Change the background to a modern office corridor, softly blurred."
+  },
+  {
+   "id": "jimin",
+   "ref": "friend.png",
+   "prompt": "Replace the young man with a cheerful Korean woman in her early 20s: long wavy brown hair, a bright big smile, rosy cheeks, mustard-yellow knit cardigan over a white T-shirt, waving one hand. Keep the same autumn park background."
+  },
+  {
+   "id": "seojin",
+   "ref": "friend.png",
+   "prompt": "Replace the young man with a quiet, calm Korean man in his early 20s: straight black hair with neat bangs, a calm expression with a slight closed-mouth smile, gray crew-neck sweatshirt, black headphones resting around his neck, arms relaxed at his sides. Change the background to a university campus with brick buildings and trees, softly blurred."
+  },
+  {
+   "id": "turi",
+   "ref": "mascot.png",
+   "prompt": "Keep this exact white mascot character unchanged (white rounded body, small black dot eyes, small smile, navy suit, white shirt, blue tie). Show it from the chest up, centered, waving happily with one hand, sitting on a cozy sofa in a warm, bright living room with a bookshelf and a plant, softly blurred background. No briefcase."
+  },
+  {
+   "id": "warm-mentor",
+   "ref": "interviewer.png",
+   "prompt": "Replace the bald man with a warm, friendly Korean woman interviewer in her late 30s: shoulder-length wavy brown hair, soft kind eyes, a gentle warm smile, light beige blazer over a white blouse, small pearl earrings. She sits at the same wooden desk with her hands folded. Keep the white name plate on the desk that reads 면접관, and the same office window background."
+  },
+  {
+   "id": "calm-hr",
+   "ref": "interviewer.png",
+   "prompt": "Replace the bald man with a calm Korean HR manager in his early 50s: neatly combed short black hair with gray temples, thin silver-rimmed glasses, a composed gentle expression with a faint smile, charcoal gray suit, light blue shirt, dark gray tie, holding a printed resume with both hands at the desk. Keep the white name plate on the desk that reads 면접관, and the same office window background."
+  },
+  {
+   "id": "startup-leader",
+   "ref": "interviewer.png",
+   "prompt": "Replace the bald man with a cheerful young Korean startup CEO in his early 30s: tousled short black hair, round black-framed glasses, a big bright open smile, navy crew-neck knit sweater over a white T-shirt, an open silver laptop on the desk. Change the background to a bright modern startup office with green plants, a glass wall and colorful sticky notes, softly blurred. Keep the white name plate on the desk that reads 면접관."
+  },
+  {
+   "id": "cool-exec",
+   "ref": "interviewer.png",
+   "prompt": "Replace the bald man with a cool, confident Korean female executive in her mid-40s: sleek short black bob haircut, sharp focused eyes, a calm serious expression with closed lips, black tailored suit with a white blouse, a thin tablet on the desk. Change the background to an executive office with a large window showing a city skyline, softly blurred. Keep the white name plate on the desk that reads 면접관."
+  },
+  {
+   "id": "sharp-judges",
+   "ref": "interviewer.png",
+   "w": 960,
+   "h": 896,
+   "prompt": "Turn the scene into a contest judging panel: three serious Korean judges sit side by side behind one long table covered with a dark navy cloth. In the center a man in his 50s with gray hair and black glasses holding a pen, on the left a woman in her 40s with her hair in a low bun, on the right a man in his 40s with short black hair. Each has scoring sheets in front of them. Background: a dim auditorium with warm stage spotlights, softly blurred. No text anywhere."
+  },
+  {
+   "id": "busy-execs",
+   "ref": "interviewer.png",
+   "w": 960,
+   "h": 896,
+   "prompt": "Turn the scene into a corporate boardroom meeting: three Korean executives in dark suits sit at a glossy wooden conference table facing the camera. In the center a woman in her 50s with short dark permed hair looks straight ahead with an impatient expression, on the left a gray-haired man checks his wristwatch, on the right a man frowns at a tablet. Coffee cups and documents on the table. Background: a glass-walled boardroom with a city view, softly blurred. No text anywhere."
+  }
+ ]
+}

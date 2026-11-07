@@ -1,0 +1,80 @@
+{
+ "style": "",
+ "jobs": [
+  {
+   "id": "barista",
+   "ref": "out/barista/s1.png",
+   "prompt": "Keep the people exactly as they are: the same faces, hair, expressions, clothes, hands, pose, size and position. Only change the background behind them: make it softly out of focus like a portrait photo with a shallow depth of field and creamy bokeh, and make any signs, boards or screens in the background blank, with no letters or numbers."
+  },
+  {
+   "id": "rush-staff",
+   "ref": "out/rush-staff/s1.png",
+   "prompt": "Keep the people exactly as they are: the same faces, hair, expressions, clothes, hands, pose, size and position. Only change the background behind them: make it softly out of focus like a portrait photo with a shallow depth of field and creamy bokeh, and make any signs, boards or screens in the background blank, with no letters or numbers."
+  },
+  {
+   "id": "cafe-owner",
+   "ref": "out/cafe-owner/s1.png",
+   "prompt": "Make this person clearly look like a Korean woman in her late 40s: a slightly fuller face, soft smile lines around the eyes, light pink lipstick and small pearl earrings; keep her glasses, curly hair, clothes, notepad, pen and pose. Keep the people exactly as they are: the same faces, hair, expressions, clothes, hands, pose, size and position. Only change the background behind them: make it softly out of focus like a portrait photo with a shallow depth of field and creamy bokeh, and make any signs, boards or screens in the background blank, with no letters or numbers."
+  },
+  {
+   "id": "student",
+   "ref": "out/student/s1.png",
+   "prompt": "Keep the people exactly as they are: the same faces, hair, expressions, clothes, hands, pose, size and position. Only change the background behind them: make it softly out of focus like a portrait photo with a shallow depth of field and creamy bokeh, and make any signs, boards or screens in the background blank, with no letters or numbers."
+  },
+  {
+   "id": "office-worker",
+   "ref": "out/office-worker/s0.png",
+   "prompt": "Keep the people exactly as they are: the same faces, hair, expressions, clothes, hands, pose, size and position. Only change the background behind them: make it softly out of focus like a portrait photo with a shallow depth of field and creamy bokeh, and make any signs, boards or screens in the background blank, with no letters or numbers."
+  },
+  {
+   "id": "grandma",
+   "ref": "out/grandma/s1.png",
+   "prompt": "Keep the people exactly as they are: the same faces, hair, expressions, clothes, hands, pose, size and position. Only change the background behind them: make it softly out of focus like a portrait photo with a shallow depth of field and creamy bokeh, and make any signs, boards or screens in the background blank, with no letters or numbers."
+  },
+  {
+   "id": "peer",
+   "ref": "out/peer/s0.png",
+   "prompt": "Keep the people exactly as they are: the same faces, hair, expressions, clothes, hands, pose, size and position. Only change the background behind them: make it softly out of focus like a portrait photo with a shallow depth of field and creamy bokeh, and make any signs, boards or screens in the background blank, with no letters or numbers."
+  },
+  {
+   "id": "team-lead",
+   "ref": "out/team-lead/s1.png",
+   "prompt": "Keep the people exactly as they are: the same faces, hair, expressions, clothes, hands, pose, size and position. Only change the background behind them: make it softly out of focus like a portrait photo with a shallow depth of field and creamy bokeh, and make any signs, boards or screens in the background blank, with no letters or numbers."
+  },
+  {
+   "id": "junior",
+   "ref": "out/junior/s0.png",
+   "prompt": "Keep the people exactly as they are: the same faces, hair, expressions, clothes, hands, pose, size and position. Only change the background behind them: make it softly out of focus like a portrait photo with a shallow depth of field and creamy bokeh, and make any signs, boards or screens in the background blank, with no letters or numbers."
+  },
+  {
+   "id": "seojin",
+   "ref": "out/seojin/s0.png",
+   "prompt": "Keep the people exactly as they are: the same faces, hair, expressions, clothes, hands, pose, size and position. Only change the background behind them: make it softly out of focus like a portrait photo with a shallow depth of field and creamy bokeh, and make any signs, boards or screens in the background blank, with no letters or numbers."
+  },
+  {
+   "id": "startup-leader",
+   "ref": "out/startup-leader/s1.png",
+   "prompt": "Keep the people exactly as they are: the same faces, hair, expressions, clothes, hands, pose, size and position. Only change the background behind them: make it softly out of focus like a portrait photo with a shallow depth of field and creamy bokeh, and make any signs, boards or screens in the background blank, with no letters or numbers. Keep the white name plate on the desk that reads 면접관 exactly as it is."
+  },
+  {
+   "id": "cool-exec",
+   "ref": "out/cool-exec/s0.png",
+   "prompt": "Keep the people exactly as they are: the same faces, hair, expressions, clothes, hands, pose, size and position. Only change the background behind them: make it softly out of focus like a portrait photo with a shallow depth of field and creamy bokeh, and make any signs, boards or screens in the background blank, with no letters or numbers. Keep the white name plate on the desk that reads 면접관 exactly as it is."
+  },
+  {
+   "id": "sharp-judges",
+   "ref": "judges-tall.png",
+   "prompt": "The blurred area at the top is empty: fill it so that the dark red stage curtains and the warm spotlights continue naturally above the judges. Keep the people exactly as they are: the same faces, hair, expressions, clothes, hands, pose, size and position. Only change the background behind them: make it softly out of focus like a portrait photo with a shallow depth of field and creamy bokeh, and make any signs, boards or screens in the background blank, with no letters or numbers."
+  },
+  {
+   "id": "busy-execs",
+   "ref": "execs-tall.png",
+   "prompt": "The blurred area at the bottom is empty: fill it so that the glossy wooden conference table continues naturally down to the bottom edge, with a few papers on it. Keep the people exactly as they are: the same faces, hair, expressions, clothes, hands, pose, size and position. Only change the background behind them: make it softly out of focus like a portrait photo with a shallow depth of field and creamy bokeh, and make any signs, boards or screens in the background blank, with no letters or numbers."
+  },
+  {
+   "id": "turi",
+   "ref": "mascot-big.png",
+   "prompt": "Keep this mascot character exactly as it is: the same face with two small solid dark brown dot eyes and a simple curved smile, no eyebrows, the same white rounded body with the small tuft on top, the same navy suit, white shirt and blue tie, the same raised waving hand, the same size and position. Remove the briefcase. Replace the plain background with a cozy, bright living room with a bookshelf, a sofa and a green plant, softly out of focus with creamy bokeh. Soft 3D render, gentle warm lighting."
+  }
+ ]
+}
