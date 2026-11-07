@@ -1,0 +1,24 @@
+# Main environment (/data/seotturi/.venv): Gemma 4 training and evaluation, the accent classifier,
+# and the web service (engine, accent service, web server). The versions are the tested ones.
+# Tested with Python 3.13 on NVIDIA DGX Spark (GB10, aarch64, CUDA). Install a CUDA build of
+# torch/torchaudio for your platform first (https://pytorch.org/get-started/locally/), then:
+#   pip install -r requirements.txt
+# Also needed on the system: ffmpeg (decoding uploads, the accent tests' denoiser), tested 8.0.1.
+torch==2.11.0
+torchaudio==2.11.0
+transformers==5.13.0     # Gemma 4 Unified (audio input), Whisper, wav2vec2, RoBERTa
+peft==0.20.0
+accelerate==1.14.0
+safetensors==0.8.0
+huggingface_hub==2.2.0
+numpy==2.4.6
+scipy==1.18.0
+pillow==12.3.0
+fastapi==0.136.3
+uvicorn==0.51.0
+python-multipart==0.0.32  # uploads
+httpx==0.28.1
+
+# img-gen only: OpenCV for the face detector. diffusers 0.39.0 goes into img-gen/pylib
+# (pip install --target img-gen/pylib diffusers==0.39.0, then run with PYTHONPATH=img-gen/pylib).
+opencv-python==5.0.0.93
