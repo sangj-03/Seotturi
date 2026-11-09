@@ -969,12 +969,18 @@ async def review_generate(body: dict):
 
 
 # ---- word book --------------------------------------------------------------------------------
+# data/dialect_dict.json also keeps an example sentence of the region's AI Hub speakers for each word they said
+# (example_dialect, example_standard, example_form). AI Hub's terms do not allow showing its transcripts to others,
+# so the site leaves them out and the word card shows the 우리말샘 definition (web/js/screens/journal.js).
+AIHUB_FIELDS = ("example_dialect", "example_standard", "example_form")
+
+
 def load_dict():
     global DICT
     path = os.path.join(DATA, "dialect_dict.json")
     if os.path.exists(path):
         with open(path, encoding="utf-8") as f:
-            DICT = json.load(f)
+            DICT = [{k: v for k, v in e.items() if k not in AIHUB_FIELDS} for e in json.load(f)]
 
 
 @app.get("/api/dict")

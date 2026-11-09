@@ -8,6 +8,9 @@ import glob
 import json
 import os
 
+# The zones of the benchmark (scripts/bench_score.py, web/js/benchmark.js).
+ZONES = {"서울·경기", "강원", "충청", "대구·경북", "부산·울산·경남", "전라", "제주"}
+
 
 def read_state(path):
     """engine_state.json: the served adapter (active), update history, cached scores, rejected checkpoints."""
@@ -22,16 +25,34 @@ def read_state(path):
 
 
 def bench_summaries(bench_dir):
-    """Every benchmark summary (bench/<id>.json) by adapter id."""
+    """Every benchmark summary (bench/<id>.json) by adapter id, zone answers outside ZONES counted as "-"."""
     out = {}
     for p in glob.glob(os.path.join(bench_dir, "*.json")):
         try:
             with open(p, encoding="utf-8") as f:
                 b = json.load(f)
-            out[b["id"]] = b
+            out[b["id"]] = fold_off_format(b)
         except (OSError, ValueError, KeyError):
             continue
     return out
+
+
+def fold_off_format(b):
+    """Count every zone answer outside ZONES as "-" in the confusion matrices, as /benchmark already shows them.
+    When the model broke the answer format, the zone it gave can run on into its transcript of an AI Hub clip, and
+    AI Hub's terms do not allow showing that to others."""
+    for v in (b.get("metrics") or {}).values():
+        conf = v.get("confusion") if isinstance(v, dict) else None
+        if not isinstance(conf, dict):
+            continue
+        for gold, preds in list(conf.items()):
+            if isinstance(preds, dict):
+                folded = {}
+                for p, n in preds.items():
+                    k = p if p in ZONES else "-"
+                    folded[k] = folded.get(k, 0) + n
+                conf[gold] = folded
+    return b
 
 
 def sorted_summaries(benches):

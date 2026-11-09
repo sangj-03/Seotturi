@@ -180,7 +180,7 @@ browsers do not keep an old copy.
 | --- | --- |
 | 홈 | Profile card (tier, nickname, XP), XP gauge, journey map (one stop per tier from 부산 to 서울; every stop, locked ones too, opens in the card below with what it means and the XP still needed; ‹ ›, swipe or a tap on a stop pans the map there), 학습 그래프 (사투리 지수 = corrected 어절 per day, 연습 로그 = minutes per mode, 복습 성공률), bell with model updates |
 | AI 코칭 | 새 프로젝트 → 모드 (면접 / 발표 / 일상회화; 발표 대본은 붙여 넣거나 txt·docx·pdf·pptx·hwpx 파일로 올림, `/api/script/extract`: pptx는 발표자 노트 우선) → 세부 카테고리 → 피드백 항목 → 성우·배경 → preparation → session (live transcript with dialect words marked) → feedback (개선필요 cards: 📄 content, 👥 dialect) → 면접 결과 (합격/불합격, score, XP, PNG download) |
-| 학습록 | 단어 도감 (85,557 entries: every 지역어 headword of 국립국어원 우리말샘 for 강원, 경상, 전라, 제주 and 충청, with how often AI Hub speakers of that region said it and one of their sentences, or the dictionary definition when they never did; casual forms said everywhere, such as 쫌 and 걍, are removed by comparing with Seoul-born speakers; `scripts/build_dict.py`; favourites; "내가 쓴 사투리"), 구문 복습 (read your corrected sentences aloud; Gemma 4 checks them; 맞춤 복습 문장 generated from your own dialect words), 피드백 모아보기 |
+| 학습록 | 단어 도감 (85,557 entries: every 지역어 headword of 국립국어원 우리말샘 for 강원, 경상, 전라, 제주 and 충청, shown with its dictionary definition and ordered by how often AI Hub speakers of that region said it (the file also keeps one of their sentences, which the site does not serve: see [Public access](#public-access-tailscale-funnel)); casual forms said everywhere, such as 쫌 and 걍, are removed by comparing with Seoul-born speakers; `scripts/build_dict.py`; favourites; "내가 쓴 사투리"), 구문 복습 (read your corrected sentences aloud; Gemma 4 checks them; 맞춤 복습 문장 generated from your own dialect words), 피드백 모아보기 |
 | 커뮤니티 | 자유게시판 / Q&A게시판 / 내 스크랩, 이주의 인기글, posts, likes, scraps, threaded comments. The posts from the deck are seeded and marked 예시. |
 
 The interviewer, audience and conversation partner speak their lines aloud. `server/tts.py` runs
@@ -229,7 +229,7 @@ feedback, scores) are stored per user in `data/app.db`.
 ## Public access (Tailscale Funnel)
 
 The web server itself listens on localhost only. From 2026-10-06 it was published **to the whole
-internet** through Tailscale Funnel, with Tailscale's Let's Encrypt certificate:
+internet** through Tailscale Funnel at https://seame-nvidia-dgx-spark.tailb62f1e.ts.net, with Tailscale's Let's Encrypt certificate:
 
     sudo tailscale funnel --bg 8787        # https://<machine>.<tailnet>.ts.net
 
@@ -249,14 +249,17 @@ sudo tailscale serve reset
 ../.venv/bin/python -I scripts/moderate.py posts | comments | delete-post ID | delete-comment ID
 ```
 
-Note that the word book shows example sentences taken verbatim from the AI Hub transcripts;
-check the AI Hub data terms before keeping them on a public site.
+AI Hub's terms do not allow showing its data to others, so the public site serves no AI Hub sentence (only counts
+and scores): the word book leaves out the AI Hub speakers' example sentences that `data/dialect_dict.json` keeps
+(`load_dict` in `server/app.py`; the cards show the 우리말샘 definition), and the benchmark counts any zone answer
+outside the seven zones as "-" (`server/engine_files.py`), since a model answer that broke the format can run on
+into an AI Hub transcript.
 
 ## Static copy (GitHub Pages)
 
 So the site can be visited while this machine is off, the landing page and the benchmark page
-can also be published as a static site on the `gh-pages` branch of this repository (with Pages turned on for
-that branch: https://sangj-03.github.io/Seotturi/).
+can also be published as a static site on the `gh-pages` branch of this repository. It is not published at the
+moment; with Pages turned on for that branch it would be at `https://sangj-03.github.io/Seotturi/`.
 
 ```bash
 python3 scripts/build_static.py            # build into static_site/

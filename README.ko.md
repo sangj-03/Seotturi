@@ -6,6 +6,8 @@
 **AI Hub 방언 음성으로 미세조정한 Gemma 4 12B가 문장마다 직접 듣고, 들은 그대로의 문장과 같은 뜻의 표준어 문장을 함께 씁니다. 따로 학습한 억양 분류기(Whisper-large-v3 인코더 기반)는 모든 단어가 표준어여도 목소리만으로 어느 지역 억양인지 판별합니다.**
 웹 앱은 이 두 결과로 교정, 사투리 비율, 면접 점수, 말로 대화하는 연습 상대, 복습을 제공합니다.
 
+**사이트:** https://seame-nvidia-dgx-spark.tailb62f1e.ts.net ([앱만 보기](https://seame-nvidia-dgx-spark.tailb62f1e.ts.net/app), [벤치마크](https://seame-nvidia-dgx-spark.tailb62f1e.ts.net/benchmark)). DGX Spark에서 직접 돌리므로 이 장비가 켜져 있을 때만 열립니다. Gemma 엔진이 꺼져 있으면 체험 모드로 동작합니다. AI 답변은 예시이고 앱에 그렇게 표시되며, 점수, 계정, 단어 도감, 커뮤니티, 목소리는 실제로 동작합니다.
+
 > 팀 말버스: 이재석, 이소윤, 이혜린, 전상현
 > 이 저장소에는 NVIDIA DGX Spark(GB10)에서 만들고 운영한 음성 모델과 실제 동작하는 웹 서비스가 들어 있습니다. 서비스 화면은 팀의 포스터와 최종 발표 자료를 따랐습니다. 팀의 초기 시제품(Streamlit, Qwen3·Gemma 3)은 [LEEJAESEOK212/seotturi](https://github.com/LEEJAESEOK212/seotturi)에 있습니다.
 

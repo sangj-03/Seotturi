@@ -6,6 +6,8 @@ An AI coach for speakers of Korean regional dialects who want to practise standa
 **A Gemma 4 12B model fine-tuned on AI Hub dialect speech hears each sentence and writes down both what was said and the same sentence in standard Korean. A separate accent classifier on the Whisper-large-v3 encoder tells from the voice which region the accent comes from, also when every word is standard.**
 The web app turns both into corrections, a dialect ratio, interview scores, spoken conversation partners and review.
 
+**Live site:** https://seame-nvidia-dgx-spark.tailb62f1e.ts.net ([the app alone](https://seame-nvidia-dgx-spark.tailb62f1e.ts.net/app), [benchmark](https://seame-nvidia-dgx-spark.tailb62f1e.ts.net/benchmark)). It runs on the DGX Spark itself, so it is up only while that machine is. While the Gemma engine is off, the site runs in 체험 모드: AI answers are examples, labelled as such in the app, while scores, accounts, the word book, the community and the voices are real.
+
 > Team 말버스 (Malbus): 이재석, 이소윤, 이혜린, 전상현
 > This repository holds the speech models and the working web service, built and run on an NVIDIA DGX Spark (GB10). The service follows the team's poster and final deck. The team's earlier prototype (Streamlit, Qwen3 and Gemma 3) is at [LEEJAESEOK212/seotturi](https://github.com/LEEJAESEOK212/seotturi).
 
